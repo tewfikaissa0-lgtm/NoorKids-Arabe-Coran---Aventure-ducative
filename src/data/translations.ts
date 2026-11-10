@@ -11,9 +11,11 @@ export interface Translations {
   navStories: string;
   navQuran: string;
   navQuiz: string;
+  navVoiceQuiz: string;
   navLeaderboard: string;
   navParental: string;
   navAdmin: string;
+  navDictionary: string;
   starsLabel: string;
   gemsLabel: string;
   streakLabel: string;
@@ -58,9 +60,11 @@ export const translations: Record<Language, Translations> = {
     navStories: "Histoires Prophètes",
     navQuran: "Saint Coran",
     navQuiz: "Défis & Quiz",
+    navVoiceQuiz: "Quiz Vocal",
     navLeaderboard: "Classement",
     navParental: "Parental",
     navAdmin: "Admin",
+    navDictionary: "Dictionnaire",
     starsLabel: "Étoiles",
     gemsLabel: "Diamants",
     streakLabel: "Série",
@@ -103,9 +107,11 @@ export const translations: Record<Language, Translations> = {
     navStories: "Prophet Stories",
     navQuran: "Holy Quran",
     navQuiz: "Quizzes",
+    navVoiceQuiz: "Voice Quiz",
     navLeaderboard: "Leaderboard",
     navParental: "Parents",
     navAdmin: "Admin",
+    navDictionary: "Dictionary",
     starsLabel: "Stars",
     gemsLabel: "Gems",
     streakLabel: "Streak",
@@ -148,9 +154,11 @@ export const translations: Record<Language, Translations> = {
     navStories: "قصص الأنبياء",
     navQuran: "القرآن الكريم",
     navQuiz: "الاختبارات",
+    navVoiceQuiz: "التحدي الصوتي",
     navLeaderboard: "لوحة الشرف",
     navParental: "ولي الأمر",
     navAdmin: "المعلم",
+    navDictionary: "القاموس البصري",
     starsLabel: "النجوم",
     gemsLabel: "الجواهر",
     streakLabel: "الحماس",
@@ -193,9 +201,11 @@ export const translations: Record<Language, Translations> = {
     navStories: "Historias Profetas",
     navQuran: "Santo Corán",
     navQuiz: "Cuestionarios",
+    navVoiceQuiz: "Quiz de Voz",
     navLeaderboard: "Clasificación",
     navParental: "Padres",
     navAdmin: "Admin",
+    navDictionary: "Diccionario",
     starsLabel: "Estrellas",
     gemsLabel: "Gemas",
     streakLabel: "Racha",

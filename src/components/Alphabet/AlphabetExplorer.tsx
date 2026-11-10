@@ -3,6 +3,7 @@ import { ArabicLetter, Language } from '../../types';
 import { ALPHABET_DATA } from '../../data/alphabetData';
 import { LetterDetailModal } from './LetterDetailModal';
 import { sound } from '../../utils/soundEngine';
+import { audioLibrary } from '../../utils/audioLibrary';
 import { Volume2, Sparkles, CheckCircle2, Search, Filter } from 'lucide-react';
 
 interface AlphabetExplorerProps {
@@ -37,10 +38,9 @@ export const AlphabetExplorer: React.FC<AlphabetExplorerProps> = ({
     return matchesGroup && matchesSearch;
   });
 
-  const handlePlayLetter = (e: React.MouseEvent, text: string) => {
+  const handlePlayLetter = (e: React.MouseEvent, letter: (typeof ALPHABET_DATA)[0]) => {
     e.stopPropagation();
-    sound.playPop();
-    sound.speakArabic(text);
+    audioLibrary.playLetter(letter.id);
   };
 
   const masteredCount = masteredLetterIds.length;
@@ -119,7 +119,7 @@ export const AlphabetExplorer: React.FC<AlphabetExplorerProps> = ({
             <div
               key={letter.id}
               onClick={() => {
-                sound.playPop();
+                audioLibrary.playLetter(letter.id);
                 setSelectedLetter(letter);
               }}
               className={`group relative p-4 rounded-3xl border-3 transition-all cursor-pointer flex flex-col items-center justify-between hover:scale-105 hover:shadow-xl hover:-translate-y-1 ${
@@ -130,7 +130,7 @@ export const AlphabetExplorer: React.FC<AlphabetExplorerProps> = ({
             >
               {/* Audio button top right */}
               <button
-                onClick={(e) => handlePlayLetter(e, letter.letter)}
+                onClick={(e) => handlePlayLetter(e, letter)}
                 className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 group-hover:text-amber-600 hover:scale-110 transition-all"
                 title="Écouter le son"
               >

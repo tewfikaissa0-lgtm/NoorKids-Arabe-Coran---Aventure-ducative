@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArabicLetter, Language } from '../../types';
 import { sound } from '../../utils/soundEngine';
-import { Eraser, Check, RotateCcw, Sparkles } from 'lucide-react';
+import { Eraser, Check, RotateCcw, Sparkles, Volume2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface LetterTracingCanvasProps {
@@ -48,7 +48,10 @@ export const LetterTracingCanvas: React.FC<LetterTracingCanvasProps> = ({ letter
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = brushColor;
+    sound.playBrushStroke();
   };
+
+  const lastStrokeTimeRef = React.useRef<number>(0);
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
@@ -64,6 +67,12 @@ export const LetterTracingCanvas: React.FC<LetterTracingCanvasProps> = ({ letter
 
     ctx.lineTo(x, y);
     ctx.stroke();
+
+    const now = Date.now();
+    if (now - lastStrokeTimeRef.current > 160) {
+      sound.playBrushStroke();
+      lastStrokeTimeRef.current = now;
+    }
   };
 
   const stopDrawing = () => {
@@ -73,7 +82,7 @@ export const LetterTracingCanvas: React.FC<LetterTracingCanvasProps> = ({ letter
   const handleValidate = () => {
     sound.playStarChime();
     confetti({
-      particleCount: 50,
+      particleCount: 60,
       spread: 60,
       origin: { y: 0.7 },
     });
@@ -83,9 +92,19 @@ export const LetterTracingCanvas: React.FC<LetterTracingCanvasProps> = ({ letter
   return (
     <div className="flex flex-col items-center p-4 bg-white dark:bg-slate-800 rounded-3xl border-2 border-amber-200 dark:border-slate-700">
       <div className="w-full flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-          ✍️ {lang === 'ar' ? 'تتبع ورسم الحرف بالإصبع أو الفأرة' : lang === 'en' ? 'Trace the letter with finger or mouse' : 'Trace la lettre sur le modèle'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+            ✍️ {lang === 'ar' ? 'تتبع ورسم الحرف' : lang === 'en' ? 'Trace the letter' : 'Trace la lettre'}
+          </span>
+          <button
+            onClick={() => sound.playHumanLetter(letter.id)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-slate-700 text-amber-800 dark:text-amber-200 text-[11px] font-bold hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs"
+            title="Écouter la voix humaine"
+          >
+            <Volume2 className="w-3.5 h-3.5" />
+            <span>{lang === 'ar' ? 'صوت الحرف' : 'Voix'}</span>
+          </button>
+        </div>
         <div className="flex items-center gap-1.5">
           {colors.map((c) => (
             <button

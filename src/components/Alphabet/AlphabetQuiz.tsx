@@ -61,7 +61,7 @@ export const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ lang, onReward }) =>
     // If sound type, automatically play audio
     if (isAudioType) {
       setTimeout(() => {
-        sound.speakArabic(target.letter);
+        sound.playHumanLetter(target.id);
       }, 300);
     }
   };
@@ -73,7 +73,7 @@ export const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ lang, onReward }) =>
   const handleSelectOption = (opt: ArabicLetter) => {
     if (isAnswered || !currentQuestion) return;
 
-    sound.playPop();
+    sound.playHumanLetter(opt.id);
     setSelectedOptionId(opt.id);
     setIsAnswered(true);
 
@@ -82,7 +82,7 @@ export const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ lang, onReward }) =>
     setQuestionCount((prev) => prev + 1);
 
     if (correct) {
-      sound.playStarChime();
+      sound.playMatchSuccess();
       setScore((prev) => prev + 1);
       confetti({
         particleCount: 40,
@@ -97,8 +97,7 @@ export const AlphabetQuiz: React.FC<AlphabetQuizProps> = ({ lang, onReward }) =>
 
   const handlePlayPromptSound = () => {
     if (!currentQuestion) return;
-    sound.playPop();
-    sound.speakArabic(currentQuestion.targetLetter.letter);
+    sound.playHumanLetter(currentQuestion.targetLetter.id);
   };
 
   if (!currentQuestion) return null;

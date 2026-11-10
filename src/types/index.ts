@@ -139,6 +139,7 @@ export interface StudentProfile {
   dailyWordsLearned: string[];
   screenTimeTodayMinutes: number;
   level: 'Débutant' | 'Intermédiaire' | 'Petit Savant';
+  surahRewardCooldowns?: Record<number, number>; // timestamp in ms
 }
 
 export interface ParentalSettings {

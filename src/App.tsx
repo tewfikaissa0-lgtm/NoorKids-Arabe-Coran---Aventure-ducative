@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Language, StudentProfile, ParentalSettings, Badge } from './types';
 import { translations } from './data/translations';
 import { sound } from './utils/soundEngine';
@@ -29,6 +30,7 @@ import {
   QuranIcon3D,
   QuizIcon3D,
   TreeProphetsIcon3D,
+  VoiceMicIcon3D,
 } from './components/Icons/NoorIcons';
 
 // Core Application Components
@@ -39,6 +41,13 @@ import { AlphabetExplorer } from './components/Alphabet/AlphabetExplorer';
 import { WordMatchingPuzzle } from './components/Alphabet/WordMatchingPuzzle';
 import { LetterMazeGame } from './components/Alphabet/LetterMazeGame';
 import { AlphabetQuiz } from './components/Alphabet/AlphabetQuiz';
+import { VoicePronunciationQuiz } from './components/Alphabet/VoicePronunciationQuiz';
+import { QuizDuelMode } from './components/Alphabet/QuizDuelMode';
+import { VisualDictionary } from './components/Alphabet/VisualDictionary';
+import { RootDetectiveGame } from './components/Alphabet/RootDetectiveGame';
+import { SouqMarketGame } from './components/Alphabet/SouqMarketGame';
+import { DiwanQuestGame } from './components/Alphabet/DiwanQuestGame';
+import { MadinaBuilderGame } from './components/Alphabet/MadinaBuilderGame';
 import { StoriesHub } from './components/Stories/StoriesHub';
 import { QuranReader } from './components/Quran/QuranReader';
 import { AIAssistantModal } from './components/AICompanion/AIAssistantModal';
@@ -48,7 +57,10 @@ import { SocialShareModal } from './components/Gamification/SocialShareModal';
 import { ParentalModal } from './components/ParentalControls/ParentalModal';
 import { ScreenTimeBreakModal } from './components/ParentalControls/ScreenTimeBreakModal';
 import { AdminDashboard } from './components/AdminDashboard/AdminDashboard';
-import { Sparkles, Heart, Trees } from 'lucide-react';
+import { WishLetterModal } from './components/AdminDashboard/WishLetterModal';
+import { SoundBar } from './components/SoundBar';
+import { Sparkles, Heart, Trees, Mail } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export default function App() {
   // App state
@@ -63,11 +75,14 @@ export default function App() {
   const [student, setStudent] = useState<StudentProfile>(loadStudentProfile);
   const [roster, setRoster] = useState<StudentProfile[]>(loadStudentRoster);
   const [parentalSettings, setParentalSettings] = useState<ParentalSettings>(loadParentalSettings);
+  const [isGameClosed, setIsGameClosed] = useState<boolean>(false);
+  const [announcement, setAnnouncement] = useState<string>('');
+  const [gameVersion, setGameVersion] = useState<string>('v1.6.0');
+  const [activeMultiplier, setActiveMultiplier] = useState<number>(1);
 
   // Active top-level navigation module
   const [activeTab, setActiveTab] = useState<'daily' | 'alphabet' | 'stories' | 'quran' | 'admin'>('daily');
-  // Sub-tabs inside Alphabet module
-  const [alphabetSubTab, setAlphabetSubTab] = useState<'explorer' | 'puzzle' | 'maze' | 'quiz'>('explorer');
+  const [alphabetSubTab, setAlphabetSubTab] = useState<'explorer' | 'puzzle' | 'maze' | 'quiz' | 'voice' | 'duel' | 'dictionary' | 'roots' | 'souq' | 'diwan' | 'madina'>('explorer');
 
   // Modals state
   const [isLevelModalOpen, setIsLevelModalOpen] = useState<boolean>(false);
@@ -78,6 +93,34 @@ export default function App() {
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [sharedBadge, setSharedBadge] = useState<Badge | null>(null);
   const [isBreakAlertOpen, setIsBreakAlertOpen] = useState<boolean>(false);
+  const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
+  const [isSoundOn, setIsSoundOn] = useState<boolean>(() => parentalSettings.soundEnabled);
+  const [isMusicOn, setIsMusicOn] = useState<boolean>(() => parentalSettings.musicEnabled);
+
+  // Sync sound settings & subscription
+  useEffect(() => {
+    sound.setSoundEnabled(parentalSettings.soundEnabled);
+    sound.setMusicEnabled(parentalSettings.musicEnabled);
+    setIsSoundOn(parentalSettings.soundEnabled);
+    setIsMusicOn(parentalSettings.musicEnabled);
+
+    const unsubscribe = sound.subscribe((event, data) => {
+      if (event === 'soundToggled') setIsSoundOn(data);
+      if (event === 'musicToggled') setIsMusicOn(data);
+    });
+    return () => unsubscribe();
+  }, [parentalSettings]);
+
+  // Dynamic background music themed by current section
+  useEffect(() => {
+    if (activeTab === 'stories') {
+      sound.startMusic('desert_oasis');
+    } else if (activeTab === 'quran') {
+      sound.startMusic('jannah_garden');
+    } else {
+      sound.startMusic('noorkids_adventure');
+    }
+  }, [activeTab]);
 
   // Sync dark mode class
   useEffect(() => {
@@ -98,7 +141,6 @@ export default function App() {
         const updated = { ...prev, screenTimeTodayMinutes: newMinutes };
         saveStudentProfile(updated);
 
-        // Check daily limit
         if (
           parentalSettings.dailyTimeLimitMinutes > 0 &&
           newMinutes >= parentalSettings.dailyTimeLimitMinutes &&
@@ -114,29 +156,36 @@ export default function App() {
     return () => clearInterval(timer);
   }, [parentalSettings.dailyTimeLimitMinutes, isBreakAlertOpen]);
 
-  // Global rewards dispatcher
+  // Global rewards dispatcher with activeMultiplier
   const handleReward = (starsToAdd: number, gemsToAdd: number, milestoneId?: string) => {
+    const multipliedStars = starsToAdd * activeMultiplier;
+    const multipliedGems = gemsToAdd * activeMultiplier;
+
     setStudent((prev) => {
       const newBadges = [...prev.badges];
 
-      // Check unlocking badges
       if (milestoneId && !newBadges.includes(milestoneId)) {
         newBadges.push(milestoneId);
       }
-      if (prev.stars + starsToAdd >= 100 && !newBadges.includes('first_letter')) {
+      if (prev.stars + multipliedStars >= 100 && !newBadges.includes('first_letter')) {
         newBadges.push('first_letter');
+      }
+      if (prev.stars + multipliedStars >= 1000 && !newBadges.includes('stars_1000')) {
+        newBadges.push('stars_1000');
       }
 
       const updated: StudentProfile = {
         ...prev,
-        stars: prev.stars + starsToAdd,
-        gems: prev.gems + gemsToAdd,
+        stars: prev.stars + multipliedStars,
+        gems: prev.gems + multipliedGems,
         badges: newBadges,
       };
 
       saveStudentProfile(updated);
       return updated;
     });
+
+    confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
   };
 
   const handleToggleMasterLetter = (letterId: string) => {
@@ -155,7 +204,7 @@ export default function App() {
         ...prev,
         masteredLetters: newMastered,
         badges: newBadges,
-        stars: isAlready ? prev.stars : prev.stars + 20,
+        stars: isAlready ? prev.stars : prev.stars + (20 * activeMultiplier),
       };
 
       saveStudentProfile(updated);
@@ -190,6 +239,57 @@ export default function App() {
     saveStudentProfile(newStudent);
   };
 
+  const handleUpdateCurrency = (studentId: string, starsDelta: number, gemsDelta: number) => {
+    setRoster((prev) =>
+      prev.map((s) => {
+        if (s.id === studentId) {
+          const updated = { ...s, stars: Math.max(0, s.stars + starsDelta), gems: Math.max(0, s.gems + gemsDelta) };
+          if (student.id === studentId) {
+            setStudent(updated);
+            saveStudentProfile(updated);
+          }
+          return updated;
+        }
+        return s;
+      })
+    );
+  };
+
+  const handleToggleBan = (studentId: string) => {
+    setRoster((prev) =>
+      prev.map((s) => {
+        if (s.id === studentId) {
+          const isCurrentlyBanned = (s as any).isBanned;
+          return { ...s, isBanned: !isCurrentlyBanned };
+        }
+        return s;
+      })
+    );
+  };
+
+  const handleBatchReward = (starsToAdd: number) => {
+    const multStars = starsToAdd * activeMultiplier;
+    setRoster((prev) =>
+      prev.map((s) => ({ ...s, stars: s.stars + multStars }))
+    );
+    setStudent((prev) => {
+      const updated = { ...prev, stars: prev.stars + multStars };
+      saveStudentProfile(updated);
+      return updated;
+    });
+  };
+
+  const handleBulkReset = () => {
+    setRoster((prev) =>
+      prev.map((s) => ({ ...s, stars: 50, gems: 15, masteredLetters: [], completedSurahs: [], badges: ['first_letter'] }))
+    );
+    setStudent((prev) => {
+      const updated = { ...prev, stars: 50, gems: 15, masteredLetters: [], completedSurahs: [], badges: ['first_letter'] };
+      saveStudentProfile(updated);
+      return updated;
+    });
+  };
+
   const t = translations[lang] || translations.fr;
 
   return (
@@ -200,8 +300,8 @@ export default function App() {
         onSetLang={setLang}
         isDark={isDark}
         onToggleTheme={() => setIsDark(!isDark)}
-        isSoundOn={sound.isSoundEnabled()}
-        onToggleSound={() => sound.setSoundEnabled(!sound.isSoundEnabled())}
+        isSoundOn={isSoundOn}
+        onToggleSound={() => sound.setSoundEnabled(!isSoundOn)}
         student={student}
         onOpenLevelSelector={() => setIsLevelModalOpen(true)}
         onOpenAI={() => setIsAIModalOpen(true)}
@@ -211,90 +311,101 @@ export default function App() {
         onOpenAdmin={() => setActiveTab('admin')}
       />
 
+      {announcement && (
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white px-4 py-2.5 text-center text-xs font-bold shadow-md flex items-center justify-center gap-2">
+          <span>📢 {announcement}</span>
+          <button onClick={() => setAnnouncement('')} className="ml-4 opacity-80 hover:opacity-100 text-sm cursor-pointer">✕</button>
+        </div>
+      )}
+
+      {/* Active Multiplier Notification Badge if > 1 */}
+      {activeMultiplier > 1 && (
+        <div className="bg-indigo-600 text-white px-4 py-1.5 text-center text-xs font-black shadow-inner flex items-center justify-center gap-2">
+          <span>⚡ MULTIPLICATEUR ACTIF : {activeMultiplier}X sur tous les gains ⭐ & 💎 !</span>
+        </div>
+      )}
+
       {/* Primary Navigation Ribbon with 3D Icons */}
       <nav className="bg-white dark:bg-slate-900 border-b border-amber-200/60 dark:border-slate-800 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto py-2.5 no-scrollbar">
             {/* 1. Daily Word Tab */}
-            <button
-              onClick={() => {
-                sound.playPop();
-                setActiveTab('daily');
-              }}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'daily'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-102'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { sound.playPop(); setActiveTab('daily'); }}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === 'daily' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
               }`}
             >
               <DailyWordIcon3D size={26} />
               <span>{t.navDailyWord}</span>
-            </button>
+            </motion.button>
 
             {/* 2. Alphabet Tab */}
-            <button
-              onClick={() => {
-                sound.playPop();
-                setActiveTab('alphabet');
-              }}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'alphabet'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-102'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { sound.playPop(); setActiveTab('alphabet'); }}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === 'alphabet' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
               }`}
             >
               <AlphabetIcon3D size={26} />
               <span>{t.navAlphabet}</span>
-            </button>
+            </motion.button>
 
             {/* 3. Stories Tab */}
-            <button
-              onClick={() => {
-                sound.playPop();
-                setActiveTab('stories');
-              }}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'stories'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-102'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { sound.playPop(); setActiveTab('stories'); }}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === 'stories' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
               }`}
             >
               <StoriesIcon3D size={26} />
               <span>{t.navStories}</span>
-            </button>
+            </motion.button>
 
             {/* 4. Holy Quran Tab */}
-            <button
-              onClick={() => {
-                sound.playPop();
-                setActiveTab('quran');
-              }}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'quran'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 scale-102'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { sound.playPop(); setActiveTab('quran'); }}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === 'quran' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800'
               }`}
             >
               <QuranIcon3D size={26} />
               <span>{t.navQuran}</span>
-            </button>
+            </motion.button>
 
             {/* 5. Admin Command Tab */}
-            <button
-              onClick={() => {
-                sound.playPop();
-                setActiveTab('admin');
-              }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'admin'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 scale-102'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800'
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { sound.playPop(); setActiveTab('admin'); }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800'
               }`}
             >
               <span>⚙️</span>
               <span>{t.navAdmin}</span>
-            </button>
+            </motion.button>
           </div>
+
+          {/* Wish Letter Modal Button in Navbar */}
+          <button
+            onClick={() => {
+              sound.playPop();
+              setIsWishModalOpen(true);
+            }}
+            className="hidden lg:flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md cursor-pointer"
+          >
+            <Mail className="w-4 h-4" />
+            <span>Boîte à Souhaits 💌</span>
+          </button>
         </div>
       </nav>
 
@@ -304,29 +415,19 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-center sm:justify-start gap-2 overflow-x-auto no-scrollbar">
               <button
-                onClick={() => {
-                  sound.playPop();
-                  setAlphabetSubTab('explorer');
-                }}
+                onClick={() => { sound.playPop(); setAlphabetSubTab('explorer'); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  alphabetSubTab === 'explorer'
-                    ? 'bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 shadow-xs border border-amber-300 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  alphabetSubTab === 'explorer' ? 'bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 shadow-xs border border-amber-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
                 <span>🔤</span>
-                <span>{lang === 'ar' ? 'استعراض الحروف (28)' : "L'Alphabet (28 lettres)"}</span>
+                <span>{lang === 'ar' ? 'استعراض الحروف (28)' : "L'Alphabet"}</span>
               </button>
 
               <button
-                onClick={() => {
-                  sound.playPop();
-                  setAlphabetSubTab('puzzle');
-                }}
+                onClick={() => { sound.playPop(); setAlphabetSubTab('puzzle'); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  alphabetSubTab === 'puzzle'
-                    ? 'bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 shadow-xs border border-sky-300 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  alphabetSubTab === 'puzzle' ? 'bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 shadow-xs border border-sky-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
                 <PuzzleIcon3D size={18} />
@@ -334,14 +435,9 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => {
-                  sound.playPop();
-                  setAlphabetSubTab('maze');
-                }}
+                onClick={() => { sound.playPop(); setAlphabetSubTab('maze'); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  alphabetSubTab === 'maze'
-                    ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shadow-xs border border-emerald-300 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  alphabetSubTab === 'maze' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shadow-xs border border-emerald-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
                 <MazeIcon3D size={18} />
@@ -349,18 +445,83 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => {
-                  sound.playPop();
-                  setAlphabetSubTab('quiz');
-                }}
+                onClick={() => { sound.playPop(); setAlphabetSubTab('quiz'); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  alphabetSubTab === 'quiz'
-                    ? 'bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 shadow-xs border border-purple-300 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  alphabetSubTab === 'quiz' ? 'bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 shadow-xs border border-purple-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
                 <QuizIcon3D size={18} />
                 <span>{t.navQuiz}</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('voice'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'voice' ? 'bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 shadow-xs border border-rose-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <VoiceMicIcon3D size={18} />
+                <span>{t.navVoiceQuiz || 'Quiz Vocal'}</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('duel'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'duel' ? 'bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-xs border border-indigo-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>⚔️</span>
+                <span>Quiz Duel</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('dictionary'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'dictionary' ? 'bg-white dark:bg-slate-800 text-violet-700 dark:text-violet-300 shadow-xs border border-violet-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>📖</span>
+                <span>Dictionnaire</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('roots'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'roots' ? 'bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 shadow-xs border border-purple-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>🕵️‍♂️</span>
+                <span>Racines</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('souq'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'souq' ? 'bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 shadow-xs border border-amber-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>🛒</span>
+                <span>Souq</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('diwan'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'diwan' ? 'bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 shadow-xs border border-teal-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>📜</span>
+                <span>Diwan</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playPop(); setAlphabetSubTab('madina'); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  alphabetSubTab === 'madina' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-xs border border-cyan-300 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <span>🏙️</span>
+                <span>Madina</span>
               </button>
             </div>
           </div>
@@ -369,170 +530,255 @@ export default function App() {
 
       {/* Main View Port */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-        {activeTab === 'daily' && (
-          <div className="space-y-6">
-            <DailyWordCard
-              lang={lang}
-              onReward={(stars, gems, wordId) => {
-                handleReward(stars, gems, 'daily_word_hero');
-                setStudent((prev) => {
-                  if (prev.dailyWordsLearned.includes(wordId)) return prev;
-                  const updated = {
-                    ...prev,
-                    dailyWordsLearned: [...prev.dailyWordsLearned, wordId],
-                  };
-                  saveStudentProfile(updated);
-                  return updated;
-                });
-              }}
-              learnedWords={student.dailyWordsLearned}
-            />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab + (activeTab === 'alphabet' ? alphabetSubTab : '')}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+          >
+            {activeTab === 'daily' && (
+              <div className="space-y-6">
+                <DailyWordCard
+                  lang={lang}
+                  onReward={(stars, gems, wordId) => {
+                    handleReward(stars, gems, 'daily_word_hero');
+                    setStudent((prev) => {
+                      if (prev.dailyWordsLearned.includes(wordId)) return prev;
+                      const updated = {
+                        ...prev,
+                        dailyWordsLearned: [...prev.dailyWordsLearned, wordId],
+                      };
+                      saveStudentProfile(updated);
+                      return updated;
+                    });
+                  }}
+                  learnedWords={student.dailyWordsLearned}
+                />
 
-            {/* Quick jump to game sections */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button
-                onClick={() => {
-                  sound.playPop();
-                  setActiveTab('alphabet');
-                  setAlphabetSubTab('puzzle');
-                }}
-                className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-sky-300 dark:border-slate-700 hover:border-sky-500 shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 cursor-pointer"
-              >
-                <PuzzleIcon3D size={42} />
-                <div>
-                  <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">
-                    Puzzles de Mots
-                  </h4>
-                  <p className="text-xs text-slate-500">Relie les lettres aux animaux illustrés</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { sound.playPop(); setActiveTab('alphabet'); setAlphabetSubTab('voice'); }}
+                    className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-rose-300 dark:border-slate-700 hover:border-rose-500 shadow-sm hover:shadow-md transition-colors text-left flex items-center gap-4 cursor-pointer"
+                  >
+                    <VoiceMicIcon3D size={42} />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">Quiz Vocal</h4>
+                      <p className="text-xs text-slate-500">Parle au micro pour prononcer l'arabe</p>
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { sound.playPop(); setActiveTab('alphabet'); setAlphabetSubTab('puzzle'); }}
+                    className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-sky-300 dark:border-slate-700 hover:border-sky-500 shadow-sm hover:shadow-md transition-colors text-left flex items-center gap-4 cursor-pointer"
+                  >
+                    <PuzzleIcon3D size={42} />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">Puzzles de Mots</h4>
+                      <p className="text-xs text-slate-500">Relie les lettres aux animaux illustrés</p>
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { sound.playPop(); setActiveTab('alphabet'); setAlphabetSubTab('maze'); }}
+                    className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-emerald-300 dark:border-slate-700 hover:border-emerald-500 shadow-sm hover:shadow-md transition-colors text-left flex items-center gap-4 cursor-pointer"
+                  >
+                    <MazeIcon3D size={42} />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">Le Labyrinthe</h4>
+                      <p className="text-xs text-slate-500">Guide Badr à travers les lettres</p>
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { sound.playPop(); setActiveTab('stories'); }}
+                    className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-amber-300 dark:border-slate-700 hover:border-amber-500 shadow-sm hover:shadow-md transition-colors text-left flex items-center gap-4 cursor-pointer"
+                  >
+                    <StoriesIcon3D size={42} />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">Histoires des Prophètes</h4>
+                      <p className="text-xs text-slate-500">Récits animés avec images IA</p>
+                    </div>
+                  </motion.button>
                 </div>
-              </button>
+              </div>
+            )}
 
-              <button
-                onClick={() => {
-                  sound.playPop();
-                  setActiveTab('alphabet');
-                  setAlphabetSubTab('maze');
+            {activeTab === 'alphabet' && (
+              <div>
+                {alphabetSubTab === 'explorer' && (
+                  <AlphabetExplorer
+                    lang={lang}
+                    masteredLetterIds={student.masteredLetters}
+                    onToggleMaster={handleToggleMasterLetter}
+                  />
+                )}
+                {alphabetSubTab === 'puzzle' && (
+                  <WordMatchingPuzzle
+                    lang={lang}
+                    level={student.level}
+                    onReward={(stars, gems) => handleReward(stars, gems, 'puzzle_champion')}
+                  />
+                )}
+                {alphabetSubTab === 'maze' && (
+                  <LetterMazeGame
+                    lang={lang}
+                    level={student.level}
+                    onReward={(stars, gems) => handleReward(stars, gems, 'maze_conqueror')}
+                  />
+                )}
+                {alphabetSubTab === 'quiz' && (
+                  <AlphabetQuiz
+                    lang={lang}
+                    onReward={(stars, gems) => handleReward(stars, gems)}
+                  />
+                )}
+                {alphabetSubTab === 'voice' && (
+                  <VoicePronunciationQuiz
+                    lang={lang}
+                    onReward={(stars, gems, badgeId) => handleReward(stars, gems, badgeId || 'voice_star')}
+                  />
+                )}
+                {alphabetSubTab === 'duel' && (
+                  <QuizDuelMode
+                    lang={lang}
+                    roster={roster}
+                    currentStudent={student}
+                    onReward={(stars, gems) => handleReward(stars, gems, 'first_letter')}
+                    onBack={() => setAlphabetSubTab('explorer')}
+                  />
+                )}
+                {alphabetSubTab === 'dictionary' && (
+                  <VisualDictionary lang={lang} />
+                )}
+                {alphabetSubTab === 'roots' && (
+                  <RootDetectiveGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
+                )}
+                {alphabetSubTab === 'souq' && (
+                  <SouqMarketGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
+                )}
+                {alphabetSubTab === 'diwan' && (
+                  <DiwanQuestGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
+                )}
+                {alphabetSubTab === 'madina' && (
+                  <MadinaBuilderGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
+                )}
+              </div>
+            )}
+
+            {activeTab === 'stories' && (
+              <StoriesHub
+                lang={lang}
+                readStoryIds={student.readStories}
+                onReward={(stars, gems, storyId) => {
+                  handleReward(stars, gems, 'prophets_friend');
+                  setStudent((prev) => {
+                    if (prev.readStories.includes(storyId)) return prev;
+                    const updated = {
+                      ...prev,
+                      readStories: [...prev.readStories, storyId],
+                    };
+                    saveStudentProfile(updated);
+                    return updated;
+                  });
                 }}
-                className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-emerald-300 dark:border-slate-700 hover:border-emerald-500 shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 cursor-pointer"
-              >
-                <MazeIcon3D size={42} />
-                <div>
-                  <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">
-                    Le Labyrinthe
-                  </h4>
-                  <p className="text-xs text-slate-500">Guide Badr à travers les lettres</p>
-                </div>
-              </button>
+              />
+            )}
 
-              <button
-                onClick={() => {
-                  sound.playPop();
-                  setActiveTab('stories');
+            {activeTab === 'quran' && (
+              <QuranReader
+                lang={lang}
+                onReward={(stars, gems, surahNumber) => {
+                  handleReward(stars, gems, 'little_hafiz');
+                  setStudent((prev) => {
+                    const newSurahs = prev.completedSurahs.includes(surahNumber)
+                      ? prev.completedSurahs
+                      : [...prev.completedSurahs, surahNumber];
+                    const updated = {
+                      ...prev,
+                      completedSurahs: newSurahs,
+                      surahRewardCooldowns: {
+                        ...(prev.surahRewardCooldowns || {}),
+                        [surahNumber]: Date.now(),
+                      },
+                    };
+                    saveStudentProfile(updated);
+                    return updated;
+                  });
                 }}
-                className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-amber-300 dark:border-slate-700 hover:border-amber-500 shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 cursor-pointer"
-              >
-                <StoriesIcon3D size={42} />
-                <div>
-                  <h4 className="font-bold text-sm text-slate-800 dark:text-white font-['Fredoka']">
-                    Histoires des Prophètes
-                  </h4>
-                  <p className="text-xs text-slate-500">Récits animés avec images IA & voix</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'alphabet' && (
-          <div>
-            {alphabetSubTab === 'explorer' && (
-              <AlphabetExplorer
-                lang={lang}
-                masteredLetterIds={student.masteredLetters}
-                onToggleMaster={handleToggleMasterLetter}
+                completedSurahs={student.completedSurahs}
+                surahRewardCooldowns={student.surahRewardCooldowns || {}}
               />
             )}
-            {alphabetSubTab === 'puzzle' && (
-              <WordMatchingPuzzle
+
+            {activeTab === 'admin' && (
+              <AdminDashboard
                 lang={lang}
-                level={student.level}
-                onReward={(stars, gems) => handleReward(stars, gems, 'puzzle_champion')}
+                roster={roster}
+                activeStudent={student}
+                onSelectStudent={(selected) => {
+                  setStudent(selected);
+                  saveStudentProfile(selected);
+                }}
+                onAddStudent={handleAddStudent}
+                onUpdateCurrency={handleUpdateCurrency}
+                onToggleBan={handleToggleBan}
+                isGameClosed={isGameClosed}
+                onToggleCloseGame={setIsGameClosed}
+                onBatchReward={handleBatchReward}
+                onBulkReset={handleBulkReset}
+                announcement={announcement}
+                onSetAnnouncement={setAnnouncement}
+                gameVersion={gameVersion}
+                onSetGameVersion={setGameVersion}
+                activeMultiplier={activeMultiplier}
+                onSetMultiplier={setActiveMultiplier}
               />
             )}
-            {alphabetSubTab === 'maze' && (
-              <LetterMazeGame
-                lang={lang}
-                level={student.level}
-                onReward={(stars, gems) => handleReward(stars, gems, 'maze_conqueror')}
-              />
-            )}
-            {alphabetSubTab === 'quiz' && (
-              <AlphabetQuiz
-                lang={lang}
-                onReward={(stars, gems) => handleReward(stars, gems)}
-              />
-            )}
-          </div>
-        )}
-
-        {activeTab === 'stories' && (
-          <StoriesHub
-            lang={lang}
-            readStoryIds={student.readStories}
-            onReward={(stars, gems, storyId) => {
-              handleReward(stars, gems, 'prophets_friend');
-              setStudent((prev) => {
-                if (prev.readStories.includes(storyId)) return prev;
-                const updated = {
-                  ...prev,
-                  readStories: [...prev.readStories, storyId],
-                };
-                saveStudentProfile(updated);
-                return updated;
-              });
-            }}
-          />
-        )}
-
-        {activeTab === 'quran' && (
-          <QuranReader
-            lang={lang}
-            onReward={(stars, gems, surahNumber) => {
-              handleReward(stars, gems, 'little_hafiz');
-              setStudent((prev) => {
-                if (prev.completedSurahs.includes(surahNumber)) return prev;
-                const updated = {
-                  ...prev,
-                  completedSurahs: [...prev.completedSurahs, surahNumber],
-                };
-                saveStudentProfile(updated);
-                return updated;
-              });
-            }}
-            completedSurahs={student.completedSurahs}
-          />
-        )}
-
-        {activeTab === 'admin' && (
-          <AdminDashboard
-            lang={lang}
-            roster={roster}
-            activeStudent={student}
-            onSelectStudent={(selected) => {
-              setStudent(selected);
-              saveStudentProfile(selected);
-            }}
-            onAddStudent={handleAddStudent}
-          />
-        )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
-      {/* Footer with dedication and offline badge */}
+      {/* Game Closed / Lockdown Overlay */}
+      {isGameClosed && activeTab !== 'admin' && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full text-center space-y-6 border-4 border-rose-500 shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-4xl">
+              🔒
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black font-['Fredoka'] text-slate-900 dark:text-white">
+                Jeu Fermé & Verrouillé
+              </h3>
+              <p className="text-xs text-slate-500">
+                L’application a été temporairement fermée par le créateur. Revenez plus tard.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="w-full py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs shadow-lg hover:bg-indigo-700 cursor-pointer"
+            >
+              Accéder au Panneau Créateur
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer with version and dedication */}
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-slate-800 dark:text-white font-['Fredoka'] text-sm">
-              NoorKids Arabe & Coran
+              NoorKids Arabe & Coran ({gameVersion})
             </span>
             <span>·</span>
             <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400 font-semibold">
@@ -542,12 +788,18 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsWishModalOpen(true)}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs hover:bg-amber-200 transition-colors cursor-pointer"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Envoyer un vœu</span>
+            </button>
+            <span>·</span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               100% Fonctionnel Hors Ligne
             </span>
-            <span>·</span>
-            <span>Français · العربية · English · Español</span>
           </div>
         </div>
       </footer>
@@ -626,6 +878,15 @@ export default function App() {
         }}
         lang={lang}
       />
+
+      <WishLetterModal
+        isOpen={isWishModalOpen}
+        onClose={() => setIsWishModalOpen(false)}
+        studentName={student.name}
+      />
+
+      {/* Floating Sound & Music Controller */}
+      <SoundBar lang={lang} />
     </div>
   );
 }

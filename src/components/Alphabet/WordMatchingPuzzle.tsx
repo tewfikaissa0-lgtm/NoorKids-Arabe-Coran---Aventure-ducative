@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { ArabicLetter, Language, StudentProfile } from '../../types';
 import { ALPHABET_DATA } from '../../data/alphabetData';
 import { sound } from '../../utils/soundEngine';
+import { audioLibrary } from '../../utils/audioLibrary';
 import { Sparkles, RotateCcw, Volume2, Trophy, CheckCircle2 } from 'lucide-react';
 
 interface WordMatchingPuzzleProps {
@@ -71,17 +72,17 @@ export const WordMatchingPuzzle: React.FC<WordMatchingPuzzleProps> = ({ lang, le
   const handleCardClick = (card: PuzzleItem) => {
     if (card.isMatched) return;
 
-    sound.playPop();
+    sound.playCardFlip();
 
     if (card.type === 'letter') {
-      sound.speakArabic(card.display);
+      audioLibrary.playLetter(card.letterId);
       setSelectedLetter(card);
 
       if (selectedWord) {
         checkMatch(card, selectedWord);
       }
     } else {
-      if (card.arabicWord) sound.speakArabic(card.arabicWord);
+      if (card.arabicWord) audioLibrary.playWord(card.arabicWord);
       setSelectedWord(card);
 
       if (selectedLetter) {
@@ -93,6 +94,7 @@ export const WordMatchingPuzzle: React.FC<WordMatchingPuzzleProps> = ({ lang, le
   const checkMatch = (letterCard: PuzzleItem, wordCard: PuzzleItem) => {
     if (letterCard.letterId === wordCard.letterId) {
       // Match found!
+      sound.playMatchSuccess();
       sound.playStarChime();
       const updatedCards = cards.map((c) =>
         c.letterId === letterCard.letterId ? { ...c, isMatched: true } : c

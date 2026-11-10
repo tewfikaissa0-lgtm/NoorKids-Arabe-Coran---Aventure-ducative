@@ -297,9 +297,43 @@ export const StreakFlame3D: React.FC<IconProps> = ({ className = '', size = 24 }
       d="M16 2 C16 2 26 12 26 21 C26 26.5 21.5 30 16 30 C10.5 30 6 26.5 6 21 C6 14 12 8 16 2 Z"
       fill="url(#flameGrad)"
     />
-    <path
-      d="M16 14 C16 14 20 18 20 22 C20 24.5 18 26 16 26 C14 26 12 24.5 12 22 C12 18 15 16 16 14 Z"
-      fill="#fef08a"
-    />
   </svg>
 );
+
+// 12. Voice Microphone 3D Icon
+export const VoiceMicIcon3D: React.FC<IconProps> = ({ className = '', size = 28 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 48 48"
+    fill="none"
+    className={`transition-transform duration-300 transform group-hover:scale-110 ${className}`}
+  >
+    <defs>
+      <linearGradient id="micGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#f43f5e" />
+        <stop offset="0.6" stopColor="#e11d48" />
+        <stop offset="1" stopColor="#be123c" />
+      </linearGradient>
+      <linearGradient id="micGrill" x1="0" y1="0" x2="0" y2="24" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#fecdd3" />
+        <stop offset="1" stopColor="#fda4af" />
+      </linearGradient>
+    </defs>
+    <rect x="18" y="8" width="12" height="20" rx="6" fill="url(#micGrad)" />
+    <rect x="20" y="10" width="8" height="12" rx="4" fill="url(#micGrill)" opacity="0.6" />
+    <path
+      d="M12 20 C12 27 17 31 24 31 C31 31 36 27 36 20"
+      stroke="#e11d48"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      fill="none"
+    />
+    <line x1="24" y1="31" x2="24" y2="40" stroke="#be123c" strokeWidth="3.5" strokeLinecap="round" />
+    <line x1="16" y1="40" x2="32" y2="40" stroke="#be123c" strokeWidth="3.5" strokeLinecap="round" />
+    {/* Sound waves emitting */}
+    <path d="M8 18 Q6 24 8 30" stroke="#fb7185" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <path d="M40 18 Q42 24 40 30" stroke="#fb7185" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+  </svg>
+);
+

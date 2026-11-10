@@ -110,6 +110,60 @@ export const ALL_BADGES: Badge[] = [
     requirement: 'Réussir un niveau de labyrinthe',
   },
   {
+    id: 'voice_star',
+    title: {
+      fr: 'Étoile de la Prononciation Vocale',
+      en: 'Pronunciation Star',
+      ar: 'نجم النطق والفصاحة',
+      es: 'Estrella de la Pronunciación',
+    },
+    description: {
+      fr: 'Tu as réussi à prononcer des lettres et des mots arabes à voix haute !',
+      en: 'You successfully spoke Arabic letters and words aloud!',
+      ar: 'أتقنت نطق الحروف والكلمات العربية بصوتك الجميل في التحدي الصوتي !',
+      es: '¡Pronunciaste letras y palabras árabes en voz alta!',
+    },
+    icon: '🎙️',
+    category: 'alphabet',
+    requirement: 'Réussir le quiz vocal',
+  },
+  {
+    id: 'stars_1000',
+    title: {
+      fr: '1000 Étoiles d’Or',
+      en: '1000 Golden Stars',
+      ar: '1000 نجمة ذهبية',
+      es: '1000 Estrellas Doradas',
+    },
+    description: {
+      fr: 'Tu as accumulé un total de 1000 étoiles d’or par ton travail acharné !',
+      en: 'You accumulated 1,000 golden stars through your brilliant efforts!',
+      ar: 'جمعت 1000 نجمة ذهبية بفضل اجتهادك المستمر !',
+      es: '¡Has acumulado 1000 estrellas doradas!',
+    },
+    icon: '🌟',
+    category: 'mastery',
+    requirement: 'Atteindre 1000 étoiles',
+  },
+  {
+    id: 'streak_week',
+    title: {
+      fr: 'Une Semaine de Jeu Ininterrompue',
+      en: 'One Uninterrupted Week',
+      ar: 'أسبوع كامل من اللعب والتعلم',
+      es: 'Una Semana de Juego Ininterrumpida',
+    },
+    description: {
+      fr: '7 jours de série consécutifs sans interruption ! Un vrai petit savant.',
+      en: '7 consecutive days of learning without a break!',
+      ar: '7 أيام متتالية من التعلم دون انقطاع ! عالم صغير حقيقي.',
+      es: '¡7 días consecutivos de juego sin interrupción!',
+    },
+    icon: '🗓️',
+    category: 'mastery',
+    requirement: '7 jours de série de suite',
+  },
+  {
     id: 'prophets_friend',
     title: {
       fr: 'Ami des Prophètes',

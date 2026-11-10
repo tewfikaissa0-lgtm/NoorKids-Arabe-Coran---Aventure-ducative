@@ -23,9 +23,10 @@ interface QuranReaderProps {
   lang: Language;
   onReward: (stars: number, gems: number, surahNumber: number) => void;
   completedSurahs: number[];
+  surahRewardCooldowns?: Record<number, number>;
 }
 
-export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, completedSurahs }) => {
+export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, completedSurahs, surahRewardCooldowns = {} }) => {
   const [selectedSurah, setSelectedSurah] = useState<Surah>(SURAHS_DATA[0]);
   const [activeVerseIndex, setActiveVerseIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -34,6 +35,7 @@ export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, comple
   const [hifzHideLevel, setHifzHideLevel] = useState<0 | 1 | 2>(0); // 0: All shown, 1: 50% hidden, 2: 100% hidden
   const [showTajweedModal, setShowTajweedModal] = useState<boolean>(false);
   const [inspectedRule, setInspectedRule] = useState<TajweedRuleType | null>(null);
+  const [cooldownToast, setCooldownToast] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -100,6 +102,18 @@ export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, comple
   };
 
   const handleCompleteSurah = () => {
+    const lastClaimed = surahRewardCooldowns[selectedSurah.number] || 0;
+    const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    if (now - lastClaimed < TEN_DAYS_MS) {
+      sound.playGentleBoing();
+      const remainingDays = Math.ceil((TEN_DAYS_MS - (now - lastClaimed)) / (24 * 60 * 60 * 1000));
+      setCooldownToast(`⏳ Récompense déjà récupérée ! Prochaine réclamation possible dans ${remainingDays} jour(s).`);
+      setTimeout(() => setCooldownToast(null), 4000);
+      return;
+    }
+
     sound.playCelebrationFanfare();
     confetti({
       particleCount: 100,
@@ -107,12 +121,20 @@ export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, comple
       origin: { y: 0.6 },
     });
     onReward(40, 5, selectedSurah.number);
+    setCooldownToast('🎉 Récompense de 40 ⭐ récupérée avec succès ! (Cooldown 10 jours activé)');
+    setTimeout(() => setCooldownToast(null), 4000);
   };
 
   const isCurrentCompleted = completedSurahs.includes(selectedSurah.number);
 
   return (
     <div className="space-y-6">
+      {cooldownToast && (
+        <div className="p-4 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-lg text-center animate-bounce">
+          {cooldownToast}
+        </div>
+      )}
+
       {/* Surah Selector Carousel */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
         {SURAHS_DATA.map((surah) => {
@@ -122,7 +144,7 @@ export const QuranReader: React.FC<QuranReaderProps> = ({ lang, onReward, comple
             <button
               key={surah.number}
               onClick={() => {
-                sound.playPop();
+                sound.playReverenceBell();
                 setSelectedSurah(surah);
               }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer border-2 ${

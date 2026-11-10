@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language } from '../../types';
 import { PROPHETS_TREE_DATA, ProphetNode } from '../../data/prophetsTreeData';
 import { sound } from '../../utils/soundEngine';
@@ -21,6 +21,12 @@ export const ProphetsTreeModal: React.FC<ProphetsTreeModalProps> = ({
   const [selectedEra, setSelectedEra] = useState<string>('all');
   const [activeProphet, setActiveProphet] = useState<ProphetNode>(PROPHETS_TREE_DATA[0]);
 
+  useEffect(() => {
+    if (isOpen) {
+      sound.playOudStrum();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const eras = [
@@ -36,7 +42,7 @@ export const ProphetsTreeModal: React.FC<ProphetsTreeModalProps> = ({
     : PROPHETS_TREE_DATA.filter((p) => p.era === selectedEra);
 
   const handlePlayPronunciation = (arabicName: string) => {
-    sound.playPop();
+    sound.playOudStrum();
     sound.speakArabic(arabicName);
   };
 
@@ -107,8 +113,9 @@ export const ProphetsTreeModal: React.FC<ProphetsTreeModalProps> = ({
                 <div
                   key={p.id}
                   onClick={() => {
-                    sound.playPop();
+                    sound.playOudStrum();
                     setActiveProphet(p);
+                    sound.speakArabic(p.nameArabic);
                   }}
                   className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
                     isSelected

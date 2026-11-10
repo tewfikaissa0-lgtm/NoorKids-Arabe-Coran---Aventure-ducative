@@ -38,7 +38,8 @@ export const DailyWordCard: React.FC<DailyWordCardProps> = ({ lang, onReward, le
   };
 
   const handleLetterClick = (letter: string, poolIndex: number) => {
-    sound.playPop();
+    sound.playLetterSnap();
+    sound.speakArabic(letter);
     const newSelected = [...selectedLetters, letter];
     setSelectedLetters(newSelected);
 
@@ -53,6 +54,7 @@ export const DailyWordCard: React.FC<DailyWordCardProps> = ({ lang, onReward, le
       const target = word.letters.join('');
       if (spelled === target) {
         // Correct!
+        sound.playMatchSuccess();
         sound.playCelebrationFanfare();
         confetti({
           particleCount: 80,

@@ -26,9 +26,8 @@ export const LetterDetailModal: React.FC<LetterDetailModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handlePlaySound = (text: string) => {
-    sound.playPop();
-    sound.speakArabic(text);
+  const handlePlaySound = (_text?: string) => {
+    sound.playHumanLetter(letter.id);
   };
 
   const handleMasterClick = () => {

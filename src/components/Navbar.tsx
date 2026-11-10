@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Language, StudentProfile } from '../types';
 import { translations } from '../data/translations';
 import { sound } from '../utils/soundEngine';
@@ -12,7 +12,6 @@ import {
   Trophy,
   Award,
   Shield,
-  Users,
   Heart,
   Globe,
   WifiOff,
@@ -51,6 +50,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmin,
 }) => {
   const t = translations[lang] || translations.fr;
+  const [logoClicks, setLogoClicks] = useState(0);
+
+  const handleLogoClick = () => {
+    sound.playPop();
+    const newCount = logoClicks + 1;
+    setLogoClicks(newCount);
+    if (newCount >= 3) {
+      setLogoClicks(0);
+      onOpenAdmin();
+    }
+  };
 
   const languages: { code: Language; label: string; flag: string }[] = [
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -62,9 +72,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b-2 border-amber-300/80 dark:border-amber-700/40 shadow-xs transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
-        {/* Left: Branding & Creator Credit */}
+        {/* Left: Branding & Creator Credit (Secret triple-click on logo opens Admin panel) */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-amber-500 text-white flex items-center justify-center text-2xl font-bold font-['Amiri'] shadow-md shadow-amber-500/20">
+          <div
+            onClick={handleLogoClick}
+            className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-amber-500 text-white flex items-center justify-center text-2xl font-bold font-['Amiri'] shadow-md shadow-amber-500/20 cursor-pointer select-none hover:scale-105 transition-transform"
+            title="Logo NoorKids (Triple-clic secret Admin)"
+          >
             نُور
           </div>
           <div>
@@ -121,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Right: Quick Action Controls */}
+        {/* Right: Quick Action Controls (Admin button removed from student view, accessible via secret triple-click on logo) */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* AI Companion Noor */}
           <button
@@ -161,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Language Selector */}
           <div className="relative group">
-            <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 transition-colors">
+            <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer">
               <Globe className="w-3.5 h-3.5 text-slate-500" />
               <span className="uppercase">{lang}</span>
             </button>
@@ -173,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     sound.playPop();
                     onSetLang(l.code);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                     lang === l.code ? 'bg-amber-500 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
                   }`}
                 >
@@ -190,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               sound.playPop();
               onToggleSound();
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors cursor-pointer"
             title={isSoundOn ? 'Couper le son' : 'Activer le son'}
           >
             {isSoundOn ? <Volume2 className="w-4 h-4 text-emerald-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
@@ -202,7 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               sound.playPop();
               onToggleTheme();
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-colors cursor-pointer"
             title="Basculer thème sombre / clair"
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
@@ -214,22 +228,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               sound.playPop();
               onOpenParental();
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 transition-colors cursor-pointer"
             title="Espace Parental"
           >
             <Shield className="w-4 h-4 text-emerald-600" />
-          </button>
-
-          {/* Admin Command */}
-          <button
-            onClick={() => {
-              sound.playPop();
-              onOpenAdmin();
-            }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-100 transition-colors"
-            title="Commande Enseignant / Admin"
-          >
-            <Users className="w-4 h-4 text-indigo-600" />
           </button>
         </div>
       </div>
