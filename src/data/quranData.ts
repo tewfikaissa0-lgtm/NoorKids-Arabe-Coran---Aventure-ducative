@@ -1,0 +1,701 @@
+import { Surah, TajweedRuleType } from '../types';
+
+export interface TajweedRuleInfo {
+  type: TajweedRuleType;
+  name: Record<string, string>;
+  description: Record<string, string>;
+  colorClass: string;
+  badgeBg: string;
+  example: string;
+}
+
+export const TAJWEED_RULES_INFO: Record<TajweedRuleType, TajweedRuleInfo> = {
+  ghunna: {
+    type: 'ghunna',
+    name: {
+      fr: 'Al-Ghunna (Nasalisation)',
+      en: 'Al-Ghunna (Nasalization)',
+      ar: 'الغُنَّة',
+      es: 'Al-Ghunna (Nasalización)',
+    },
+    description: {
+      fr: "Un son doux qui résonne dans le nez pendant 2 temps sur les lettres Nûn (نّ) et Mîm (مّ) avec shaddah.",
+      en: "A sweet nasal hum held for 2 counts on Nûn (نّ) and Mîm (مّ) with shaddah.",
+      ar: "صوت رخيم يخرج من الخيشوم مقداره حركتان في النون والميم المشددتين.",
+      es: "Un sonido nasal suave mantenido durante 2 tiempos en Nûn y Mîm con shaddah.",
+    },
+    colorClass: 'text-pink-500 dark:text-pink-400 font-bold',
+    badgeBg: 'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300',
+    example: 'إِنَّ - عَمَّ',
+  },
+  qalqalah: {
+    type: 'qalqalah',
+    name: {
+      fr: 'Al-Qalqalah (Le Rebond)',
+      en: 'Al-Qalqalah (Echo Bounce)',
+      ar: 'القَلْقَلَة',
+      es: 'Al-Qalqalah (El Rebote)',
+    },
+    description: {
+      fr: "La lettre rebondit comme une balle joyeuse quand elle porte un sukûn (ق - ط - ب - ج - د).",
+      en: "The letter bounces like a rubber ball when it has a sukoon (Qaf, Ta, Ba, Jim, Dal).",
+      ar: "اضطراب الصوت عند النطق بالحرف الساكن ليسمع له نبرة قوية (قطب جد).",
+      es: "La letra rebota alegremente cuando lleva sukun (Qaf, Ta, Ba, Jim, Dal).",
+    },
+    colorClass: 'text-cyan-500 dark:text-cyan-400 font-bold',
+    badgeBg: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300',
+    example: 'أَحَدٌ قُلْ - الفَلَقِ',
+  },
+  madd: {
+    type: 'madd',
+    name: {
+      fr: 'Al-Madd (Prolongation)',
+      en: 'Al-Madd (Elongation)',
+      ar: 'المَدّ',
+      es: 'Al-Madd (Prolongación)',
+    },
+    description: {
+      fr: "On allonge la voyelle de 4 à 6 temps avec une voix mélodieuse.",
+      en: "The vowel sound is gently stretched for 4 to 6 beats.",
+      ar: "إطالة الصوت بحرف من حروف المد الثلاثة (الألف والواو والياء).",
+      es: "Se alarga el sonido de la vocal entre 4 y 6 tiempos melodiosos.",
+    },
+    colorClass: 'text-emerald-500 dark:text-emerald-400 font-bold',
+    badgeBg: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300',
+    example: 'السَّمَاءِ - الضَّالِّينَ',
+  },
+  idgham: {
+    type: 'idgham',
+    name: {
+      fr: 'Al-Idghâm (Fusion)',
+      en: 'Al-Idgham (Blending)',
+      ar: 'الإِدْغَام',
+      es: 'Al-Idgham (Fusión)',
+    },
+    description: {
+      fr: "Deux lettres se fondent l'une dans l'autre pour devenir une seule lettre avec shaddah.",
+      en: "Two sounds blend smoothly into one double letter with shaddah.",
+      ar: "إدخال حرف ساكن في حرف متحرك بحيث يصيران حرفاً واحداً مشدداً.",
+      es: "Dos sonidos se funden en una sola letra con shaddah.",
+    },
+    colorClass: 'text-amber-500 dark:text-amber-400 font-bold',
+    badgeBg: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300',
+    example: 'مِنْ مَسَدٍ - يَقُولُ مَن',
+  },
+  ikhfa: {
+    type: 'ikhfa',
+    name: {
+      fr: 'Al-Ikhfâ (Dissimulation)',
+      en: 'Al-Ikhfa (Concealment)',
+      ar: 'الإِخْفَاء',
+      es: 'Al-Ikhfa (Ocultamiento)',
+    },
+    description: {
+      fr: "La lettre est prononcée à mi-chemin, avec une douce résonance cachée.",
+      en: "The sound is gently masked with a subtle nasal resonance.",
+      ar: "النطق بالنون الساكنة أو التنوين بحالة بين الإظهار والإدغام.",
+      es: "El sonido se pronuncia a medio camino con una suave resonancia.",
+    },
+    colorClass: 'text-purple-500 dark:text-purple-400 font-bold',
+    badgeBg: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
+    example: 'مِنْ شَرِّ - كُنْتُمْ',
+  },
+  normal: {
+    type: 'normal',
+    name: { fr: 'Normal', en: 'Normal', ar: 'عادي', es: 'Normal' },
+    description: { fr: 'Lecture claire', en: 'Clear reading', ar: 'قراءة واضحة', es: 'Lectura clara' },
+    colorClass: '',
+    badgeBg: '',
+    example: '',
+  },
+};
+
+export const SURAHS_DATA: Surah[] = [
+  {
+    number: 1,
+    nameArabic: 'الفَاتِحَة',
+    nameTransliteration: 'Al-Fatiha',
+    nameTranslation: {
+      fr: "L'Ouverture",
+      en: "The Opening",
+      ar: "فاتحة الكتاب",
+      es: "La Apertura",
+    },
+    versesCount: 7,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "La Mère du Livre, prière universelle de guidance et de miséricorde récitée à chaque prière.",
+      en: "The Mother of the Book, the universal prayer of guidance and mercy.",
+      ar: "أم الكتاب والسبع المثاني والقرآن العظيم.",
+      es: "La Madre del Libro, la oración universal de guía y misericordia.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+        segments: [
+          { text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ ', rule: 'normal' },
+          { text: 'الرَّحِيمِ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux.",
+          en: "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
+          ar: "بسم الله الرحمن الرحيم.",
+          es: "En el nombre de Dios, el Clementísimo, el Misericordiosísimo.",
+        },
+        transliteration: 'Bismillahi r-Rahmani r-Rahim',
+        globalAyahNumber: 1,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+        segments: [
+          { text: 'الْحَمْدُ لِلَّهِ رَبِّ ', rule: 'normal' },
+          { text: 'الْعَالَمِينَ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Louange à Allah, Seigneur de l'univers.",
+          en: "Praise be to Allah, Lord of all the worlds.",
+          ar: "الحمد لله رب العالمين.",
+          es: "Alabado sea Dios, Señor del universo.",
+        },
+        transliteration: "Al-hamdu lillahi Rabbi l-'alamin",
+        globalAyahNumber: 2,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'الرَّحْمَٰنِ الرَّحِيمِ',
+        segments: [
+          { text: 'الرَّحْمَٰنِ ', rule: 'normal' },
+          { text: 'الرَّحِيمِ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Le Tout Miséricordieux, le Très Miséricordieux,",
+          en: "The Entirely Merciful, the Especially Merciful,",
+          ar: "الرحمن الرحيم.",
+          es: "El Clementísimo, el Misericordiosísimo,",
+        },
+        transliteration: 'Ar-Rahmani r-Rahim',
+        globalAyahNumber: 3,
+      },
+      {
+        verseNumber: 4,
+        textArabic: 'مَالِكِ يَوْمِ الدِّينِ',
+        segments: [
+          { text: 'مَالِكِ يَوْمِ ', rule: 'normal' },
+          { text: 'الدِّينِ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Maître du Jour de la rétribution.",
+          en: "Sovereign of the Day of Recompense.",
+          ar: "مالك يوم الدين.",
+          es: "Soberano del Día del Juicio.",
+        },
+        transliteration: 'Maliki yawmi d-din',
+        globalAyahNumber: 4,
+      },
+      {
+        verseNumber: 5,
+        textArabic: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+        segments: [
+          { text: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ ', rule: 'normal' },
+          { text: 'نَسْتَعِينُ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "C'est Toi [Seul] que nous adorons, et c'est Toi [Seul] dont nous implorons secours.",
+          en: "It is You we worship and You we ask for help.",
+          ar: "إياك نعبد وإياك نستعين.",
+          es: "Solo a Ti adoramos y solo a Ti pedimos ayuda.",
+        },
+        transliteration: "Iyyaka na'budu wa iyyaka nasta'in",
+        globalAyahNumber: 5,
+      },
+      {
+        verseNumber: 6,
+        textArabic: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
+        segments: [
+          { text: 'اهْدِنَا الصِّرَاطَ ', rule: 'normal' },
+          { text: 'الْمُسْتَقِيمَ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Guide-nous dans le droit chemin,",
+          en: "Guide us to the straight path,",
+          ar: "اهدنا الصراط المستقيم.",
+          es: "Guíanos por el camino recto,",
+        },
+        transliteration: 'Ihdina s-sirata l-mustaqim',
+        globalAyahNumber: 6,
+      },
+      {
+        verseNumber: 7,
+        textArabic: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
+        segments: [
+          { text: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا ', rule: 'normal' },
+          { text: 'الضَّالِّينَ', rule: 'madd' },
+        ],
+        translation: {
+          fr: "Le chemin de ceux que Tu as comblés de faveurs, non pas de ceux qui ont encouru Ta colère, ni des égarés.",
+          en: "The path of those upon whom You have bestowed favor, not of those who have evoked anger or of those who are astray.",
+          ar: "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين.",
+          es: "El camino de quienes colmaste con Tu gracia, no el de los extraviados.",
+        },
+        transliteration: "Sirata lladhina an'amta 'alayhim ghayri l-maghdubi 'alayhim wala d-dallin",
+        globalAyahNumber: 7,
+      },
+    ],
+  },
+  {
+    number: 112,
+    nameArabic: 'الإِخْلَاص',
+    nameTransliteration: 'Al-Ikhlas',
+    nameTranslation: {
+      fr: 'La Pureté du Culte',
+      en: 'The Sincerity',
+      ar: 'الإخلاص والتوحيد',
+      es: 'La Sinceridad',
+    },
+    versesCount: 4,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "L'unicité absolue de Dieu, équivalente au tiers du Coran en valeur et en récompense.",
+      en: "The absolute Oneness of God, equal to one-third of the Quran in reward.",
+      ar: "سورة التوحيد الخالص لله الواحد الأحد.",
+      es: "La Unidad absoluta de Dios, equivalente a un tercio del Corán.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'قُلْ هُوَ اللَّهُ أَحَدٌ',
+        segments: [
+          { text: 'قُلْ هُوَ اللَّهُ ', rule: 'normal' },
+          { text: 'أَحَدٌ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "Dis : « Il est Allah, Unique.",
+          en: "Say, 'He is Allah, [who is] One,",
+          ar: "قل هو الله أحد.",
+          es: "Di: 'Él es Dios, Uno.",
+        },
+        transliteration: 'Qul Huwa Llahu Ahad',
+        globalAyahNumber: 6221,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'اللَّهُ الصَّمَدُ',
+        segments: [
+          { text: 'اللَّهُ ', rule: 'normal' },
+          { text: 'الصَّمَدُ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "Allah, Le Seul à être imploré pour ce que nous désirons.",
+          en: "Allah, the Eternal Refuge.",
+          ar: "الله الصمد.",
+          es: "Dios, el Refugio Eterno.",
+        },
+        transliteration: 'Allahu s-Samad',
+        globalAyahNumber: 6222,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'لَمْ يَلِدْ وَلَمْ يُولَدْ',
+        segments: [
+          { text: 'لَمْ ', rule: 'normal' },
+          { text: 'يَلِدْ ', rule: 'qalqalah' },
+          { text: 'وَلَمْ ', rule: 'normal' },
+          { text: 'يُولَدْ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "Il n'a jamais engendré, n'a pas été engendré non plus.",
+          en: "He neither begets nor is born,",
+          ar: "لم يلد ولم يولد.",
+          es: "No engendró ni fue engendrado.",
+        },
+        transliteration: 'Lam yalid wa lam youlad',
+        globalAyahNumber: 6223,
+      },
+      {
+        verseNumber: 4,
+        textArabic: 'وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ',
+        segments: [
+          { text: 'وَلَمْ ', rule: 'normal' },
+          { text: 'يَكُن لَّهُ ', rule: 'idgham' },
+          { text: 'كُفُوًا ', rule: 'normal' },
+          { text: 'أَحَدٌ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "Et nul n'est égal à Lui. »",
+          en: "Nor is there to Him any equivalent.'",
+          ar: "ولم يكن له كفواً أحد.",
+          es: "Y no hay nada comparable a Él.'",
+        },
+        transliteration: 'Wa lam yakun lahu kufuwan ahad',
+        globalAyahNumber: 6224,
+      },
+    ],
+  },
+  {
+    number: 113,
+    nameArabic: 'الفَلَق',
+    nameTransliteration: 'Al-Falaq',
+    nameTranslation: {
+      fr: "L'Aube Naissante",
+      en: "The Daybreak",
+      ar: "الفلق والصباح",
+      es: "El Alba",
+    },
+    versesCount: 5,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "Sourate de protection lumineuse contre toute obscurité et mauvaise intention.",
+      en: "A luminous prayer seeking shelter from all darkness and harm.",
+      ar: "سورة المعوذة الأولى للاستعاذة بنور الصباح من الشرور.",
+      es: "Oración protectora contra toda oscuridad y daño.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ',
+        segments: [
+          { text: 'قُلْ أَعُوذُ بِرَبِّ ', rule: 'normal' },
+          { text: 'الْفَلَقِ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "Dis : « Je cherche protection auprès du Seigneur de l'aube naissante,",
+          en: "Say, 'I seek refuge in the Lord of daybreak,",
+          ar: "قل أعوذ برب الفلق.",
+          es: "Di: 'Busco refugio en el Señor del alba,",
+        },
+        transliteration: "Qul a'udhu bi-Rabbi l-falaq",
+        globalAyahNumber: 6225,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'مِن شَرِّ مَا خَلَقَ',
+        segments: [
+          { text: 'مِن شَرِّ ', rule: 'ikhfa' },
+          { text: 'مَا ', rule: 'normal' },
+          { text: 'خَلَقَ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "contre le mal des êtres qu'Il a créés,",
+          en: "From the evil of that which He created,",
+          ar: "من شر ما خلق.",
+          es: "del mal de lo que Él ha creado,",
+        },
+        transliteration: 'Min sharri ma khalaq',
+        globalAyahNumber: 6226,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ',
+        segments: [
+          { text: 'وَمِن شَرِّ ', rule: 'ikhfa' },
+          { text: 'غَاسِقٍ إِذَا ', rule: 'normal' },
+          { text: 'وَقَبَ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "contre le mal de l'obscurité quand elle s'approfondit,",
+          en: "And from the evil of darkness when it settles,",
+          ar: "ومن شر غاسق إذا وقب.",
+          es: "y del mal de la oscuridad cuando se cierne,",
+        },
+        transliteration: 'Wa min sharri ghasiqin idha waqab',
+        globalAyahNumber: 6227,
+      },
+      {
+        verseNumber: 4,
+        textArabic: 'وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ',
+        segments: [
+          { text: 'وَمِن شَرِّ ', rule: 'ikhfa' },
+          { text: 'النَّفَّاثَاتِ ', rule: 'ghunna' },
+          { text: 'فِي ', rule: 'normal' },
+          { text: 'الْعُقَدِ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "contre le mal de celles qui soufflent [les sorcières] sur les nœuds,",
+          en: "And from the evil of the blowers in knots,",
+          ar: "ومن شر النفاثات في العقد.",
+          es: "y del mal de los que soplan en los nudos,",
+        },
+        transliteration: "Wa min sharri n-naffathati fi l-'uqad",
+        globalAyahNumber: 6228,
+      },
+      {
+        verseNumber: 5,
+        textArabic: 'وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ',
+        segments: [
+          { text: 'وَمِن شَرِّ ', rule: 'ikhfa' },
+          { text: 'حَاسِدٍ إِذَا ', rule: 'normal' },
+          { text: 'حَسَدَ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "et contre le mal de l'envieux quand il envie. »",
+          en: "And from the evil of an envier when he envies.'",
+          ar: "ومن شر حاسد إذا حسد.",
+          es: "y del mal del envidioso cuando envidia.'",
+        },
+        transliteration: 'Wa min sharri hasidin idha hasad',
+        globalAyahNumber: 6229,
+      },
+    ],
+  },
+  {
+    number: 114,
+    nameArabic: 'النَّاس',
+    nameTransliteration: 'An-Nas',
+    nameTranslation: {
+      fr: 'Les Hommes',
+      en: 'Mankind',
+      ar: 'الناس والبشرية',
+      es: 'La Humanidad',
+    },
+    versesCount: 6,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "Protection bienveillante auprès du Roi des Hommes contre tout mauvais murmure.",
+      en: "Protection from whispering doubts in hearts, seeking the King of humanity.",
+      ar: "سورة المعوذة الثانية للاعتصام بملك الناس وإلههم.",
+      es: "Protección bajo el cuidado del Rey de los hombres contra todo susurro.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
+        segments: [
+          { text: 'قُلْ أَعُوذُ بِرَبِّ ', rule: 'normal' },
+          { text: 'النَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "Dis : « Je cherche protection auprès du Seigneur des hommes.",
+          en: "Say, 'I seek refuge in the Lord of mankind,",
+          ar: "قل أعوذ برب الناس.",
+          es: "Di: 'Busco refugio en el Señor de los hombres,",
+        },
+        transliteration: "Qul a'udhu bi-Rabbi n-nas",
+        globalAyahNumber: 6230,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'مَلِكِ النَّاسِ',
+        segments: [
+          { text: 'مَلِكِ ', rule: 'normal' },
+          { text: 'النَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "Le Souverain des hommes,",
+          en: "The Sovereign of mankind,",
+          ar: "ملك الناس.",
+          es: "El Soberano de los hombres,",
+        },
+        transliteration: 'Maliki n-nas',
+        globalAyahNumber: 6231,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'إِلَٰهِ النَّاسِ',
+        segments: [
+          { text: 'إِلَٰهِ ', rule: 'normal' },
+          { text: 'النَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "Dieu des hommes,",
+          en: "The God of mankind,",
+          ar: "إله الناس.",
+          es: "El Dios de los hombres,",
+        },
+        transliteration: 'Ilahi n-nas',
+        globalAyahNumber: 6232,
+      },
+      {
+        verseNumber: 4,
+        textArabic: 'مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ',
+        segments: [
+          { text: 'مِن شَرِّ ', rule: 'ikhfa' },
+          { text: 'الْوَسْوَاسِ ', rule: 'normal' },
+          { text: 'الْخَنَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "contre le mal du mauvais conseiller, furtif,",
+          en: "From the evil of the retreating whisperer -",
+          ar: "من شر الوسواس الخناس.",
+          es: "del mal del susurrador furtivo,",
+        },
+        transliteration: "Min sharri l-waswasi l-khannas",
+        globalAyahNumber: 6233,
+      },
+      {
+        verseNumber: 5,
+        textArabic: 'الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ',
+        segments: [
+          { text: 'الَّذِي يُوَسْوِسُ فِي صُدُورِ ', rule: 'normal' },
+          { text: 'النَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "qui souffle le mal dans les poitrines des hommes,",
+          en: "Who whispers [evil] into the breasts of mankind -",
+          ar: "الذي يوسوس في صدور الناس.",
+          es: "que susurra en los pechos de los hombres,",
+        },
+        transliteration: 'Alladhi yuwaswisu fi suduri n-nas',
+        globalAyahNumber: 6234,
+      },
+      {
+        verseNumber: 6,
+        textArabic: 'مِنَ الْجِنَّةِ وَالنَّاسِ',
+        segments: [
+          { text: 'مِنَ ', rule: 'normal' },
+          { text: 'الْجِنَّةِ ', rule: 'ghunna' },
+          { text: 'وَ', rule: 'normal' },
+          { text: 'النَّاسِ', rule: 'ghunna' },
+        ],
+        translation: {
+          fr: "qu'il soit d'entre les djinns ou les hommes. »",
+          en: "From among the jinn and mankind.'",
+          ar: "من الجنة والناس.",
+          es: "proceda de los genios o de los hombres.'",
+        },
+        transliteration: 'Mina l-jinnati wa n-nas',
+        globalAyahNumber: 6235,
+      },
+    ],
+  },
+  {
+    number: 108,
+    nameArabic: 'الكَوْثَر',
+    nameTransliteration: 'Al-Kawthar',
+    nameTranslation: {
+      fr: "L'Abondance",
+      en: "The Abundance",
+      ar: "نهر الكوثر العظيم",
+      es: "La Abundancia",
+    },
+    versesCount: 3,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "Le don sublime du fleuve Al-Kawthar au Prophète et la joie de la gratitude.",
+      en: "The promise of the sweet celestial river Al-Kawthar and grateful worship.",
+      ar: "البشارة العظيمة بالنهر الجميل في الجنة والخير الوفير.",
+      es: "La promesa del río celestial Al-Kawthar y la alegría del agradecimiento.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ',
+        segments: [
+          { text: 'إِنَّا ', rule: 'ghunna' },
+          { text: 'أَعْطَيْنَاكَ ', rule: 'normal' },
+          { text: 'الْكَوْثَرَ', rule: 'normal' },
+        ],
+        translation: {
+          fr: "Nous t'avons certes accordé l'Abondance [Al-Kawthar].",
+          en: "Indeed, We have granted you, [O Muhammad], al-Kawthar.",
+          ar: "إنا أعطيناك الكوثر.",
+          es: "Ciertamente te hemos concedido la abundancia.",
+        },
+        transliteration: "Inna a'taynaka l-kawthar",
+        globalAyahNumber: 6199,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'فَصَلِّ لِرَبِّكَ وَانْحَرْ',
+        segments: [
+          { text: 'فَصَلِّ لِرَبِّكَ ', rule: 'normal' },
+          { text: 'وَانْحَرْ', rule: 'normal' },
+        ],
+        translation: {
+          fr: "Prie donc ton Seigneur et offre ton sacrifice.",
+          en: "So pray to your Lord and sacrifice [to Him alone].",
+          ar: "فصل لربك وانحر.",
+          es: "Ora, pues, a tu Señor y haz ofrenda.",
+        },
+        transliteration: 'Fa-salli li-Rabbika wanhar',
+        globalAyahNumber: 6200,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ',
+        segments: [
+          { text: 'إِنَّ ', rule: 'ghunna' },
+          { text: 'شَانِئَكَ هُوَ ', rule: 'normal' },
+          { text: 'الْأَبْتَرُ', rule: 'qalqalah' },
+        ],
+        translation: {
+          fr: "C'est certes celui qui te hait qui sera privé de toute postérité.",
+          en: "Indeed, your enemy is the one cut off.",
+          ar: "إن شانئك هو الأبتر.",
+          es: "Ciertamente quien te odia quedará sin descendencia.",
+        },
+        transliteration: 'Inna shani-aka huwa l-abtar',
+        globalAyahNumber: 6201,
+      },
+    ],
+  },
+  {
+    number: 103,
+    nameArabic: 'العَصْر',
+    nameTransliteration: 'Al-Asr',
+    nameTranslation: {
+      fr: 'Le Temps',
+      en: 'The Declining Day',
+      ar: 'العصر والزمن',
+      es: 'El Tiempo',
+    },
+    versesCount: 3,
+    revelationType: 'Meccan',
+    theme: {
+      fr: "La valeur du temps et les quatre clés de la réussite : la foi, les bonnes actions, la vérité et la patience.",
+      en: "The priceless value of time and the four golden keys of life: faith, good deeds, truth, and patience.",
+      ar: "سورة جامعة لأسس النجاح والفلاح في الدنيا والآخرة.",
+      es: "El valor del tiempo y las cuatro claves del éxito.",
+    },
+    verses: [
+      {
+        verseNumber: 1,
+        textArabic: 'وَالْعَصْرِ',
+        segments: [{ text: 'وَالْعَصْرِ', rule: 'normal' }],
+        translation: {
+          fr: "Par le Temps !",
+          en: "By time,",
+          ar: "والعصر.",
+          es: "¡Por el tiempo!",
+        },
+        transliteration: "Wal-'asr",
+        globalAyahNumber: 6177,
+      },
+      {
+        verseNumber: 2,
+        textArabic: 'إِنَّ الْإِنسَانَ لَفِي خُسْرٍ',
+        segments: [
+          { text: 'إِنَّ ', rule: 'ghunna' },
+          { text: 'الْإِنسَانَ ', rule: 'ikhfa' },
+          { text: 'لَفِي خُسْرٍ', rule: 'normal' },
+        ],
+        translation: {
+          fr: "L'homme est certes, en perdition,",
+          en: "Indeed, mankind is in loss,",
+          ar: "إن الإنسان لفي خسر.",
+          es: "Ciertamente el ser humano está en pérdida,",
+        },
+        transliteration: "Inna l-insana lafi khusr",
+        globalAyahNumber: 6178,
+      },
+      {
+        verseNumber: 3,
+        textArabic: 'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ',
+        segments: [
+          { text: 'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا ', rule: 'normal' },
+          { text: 'بِالْحَقِّ ', rule: 'qalqalah' },
+          { text: 'وَتَوَاصَوْا بِالصَّبْرِ', rule: 'normal' },
+        ],
+        translation: {
+          fr: "sauf ceux qui croient et accomplissent les bonnes œuvres, s'enjoignent mutuellement la vérité et s'enjoignent mutuellement l'endurance.",
+          en: "Except for those who have believed and done righteous deeds and advised each other to truth and advised each other to patience.",
+          ar: "إلا الذين آمنوا وعملوا الصالحات وتواصوا بالحق وتواصوا بالصبر.",
+          es: "salvo los que creen, obran bien y se aconsejan la verdad y la paciencia.",
+        },
+        transliteration: "Illa lladhina amanu wa 'amilu s-salihati wa tawasaw bil-haqqi wa tawasaw bis-sabr",
+        globalAyahNumber: 6179,
+      },
+    ],
+  },
+];

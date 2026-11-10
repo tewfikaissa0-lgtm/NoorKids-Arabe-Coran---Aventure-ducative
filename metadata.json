@@ -1,0 +1,6 @@
+{
+  "name": "NoorKids Arabe & Coran - Aventure Éducative",
+  "description": "Jeu éducatif d'arabe et du Coran pour enfants créé par Maryam et son fils : alphabet, puzzles, labyrinthe, récitation Tajweed, histoires des prophètes, IA conteuse, contrôle parental et suivi enseignant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
