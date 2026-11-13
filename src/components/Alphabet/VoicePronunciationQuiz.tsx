@@ -393,6 +393,34 @@ export const VoicePronunciationQuiz: React.FC<VoicePronunciationQuizProps> = ({
         </div>
       </div>
 
+      {/* Weekly Pronunciation Challenge Banner */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-4 sm:p-5 rounded-3xl text-white shadow-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-center sm:text-left">
+          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0">
+            🎙️✨
+          </div>
+          <div>
+            <h3 className="font-bold text-sm sm:text-base font-['Fredoka']">
+              Défi de Prononciation Hebdomadaire
+            </h3>
+            <p className="text-xs text-amber-100">
+              Prononcez <span className="font-['Amiri'] font-bold text-amber-200 text-sm">« بِسْمِ اللَّهِ »</span> pour gagner un badge exclusif !
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            sound.playStarChime();
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            onReward(100, 30, 'weekly_voice_champion');
+          }}
+          className="px-4 py-2 rounded-2xl bg-white text-rose-700 font-black text-xs shadow-md hover:bg-amber-50 transition-colors cursor-pointer whitespace-nowrap"
+        >
+          Valider le Défi (⭐ 100 & 💎 30)
+        </button>
+      </div>
+
       {/* Target Letter / Word Card */}
       <div className="flex flex-col items-center text-center p-6 sm:p-8 bg-white dark:bg-slate-800/90 rounded-3xl border-2 border-rose-200 dark:border-slate-700 shadow-md relative mb-6">
         <span className="text-5xl mb-2">{currentItem.emoji}</span>

@@ -53,11 +53,15 @@ import { QuranReader } from './components/Quran/QuranReader';
 import { AIAssistantModal } from './components/AICompanion/AIAssistantModal';
 import { LeaderboardModal } from './components/Gamification/LeaderboardModal';
 import { BadgesModal } from './components/Gamification/BadgesModal';
+import { DailyChallengesModal } from './components/Gamification/DailyChallengesModal';
+import { StudentAuthModal } from './components/Auth/StudentAuthModal';
+import { StudentStatsCard } from './components/Gamification/StudentStatsCard';
 import { SocialShareModal } from './components/Gamification/SocialShareModal';
 import { ParentalModal } from './components/ParentalControls/ParentalModal';
 import { ScreenTimeBreakModal } from './components/ParentalControls/ScreenTimeBreakModal';
 import { AdminDashboard } from './components/AdminDashboard/AdminDashboard';
 import { WishLetterModal } from './components/AdminDashboard/WishLetterModal';
+import { ChangelogModal } from './components/ChangelogModal';
 import { SoundBar } from './components/SoundBar';
 import { Sparkles, Heart, Trees, Mail } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -89,11 +93,14 @@ export default function App() {
   const [isAIModalOpen, setIsAIModalOpen] = useState<boolean>(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isBadgesModalOpen, setIsBadgesModalOpen] = useState<boolean>(false);
+  const [isDailyChallengesOpen, setIsDailyChallengesOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isParentalModalOpen, setIsParentalModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [sharedBadge, setSharedBadge] = useState<Badge | null>(null);
   const [isBreakAlertOpen, setIsBreakAlertOpen] = useState<boolean>(false);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState<boolean>(false);
   const [isSoundOn, setIsSoundOn] = useState<boolean>(() => parentalSettings.soundEnabled);
   const [isMusicOn, setIsMusicOn] = useState<boolean>(() => parentalSettings.musicEnabled);
 
@@ -212,13 +219,13 @@ export default function App() {
     });
   };
 
-  const handleAddStudent = (name: string, level: StudentProfile['level']) => {
+  const handleAddStudent = (name: string, level: StudentProfile['level'], gender: 'boy' | 'girl', avatar: string) => {
     const newStudent: StudentProfile = {
-      id: `student-${Date.now()}`,
+      id: `NOOR-${Math.floor(100000 + Math.random() * 900000)}`,
       name,
-      avatar: '🧒',
-      stars: 50,
-      gems: 15,
+      avatar: avatar || (gender === 'boy' ? '👦' : '👧'),
+      stars: 1000,
+      gems: 200,
       dailyStreak: 1,
       lastActiveDate: new Date().toISOString().split('T')[0],
       masteredLetters: [],
@@ -231,12 +238,38 @@ export default function App() {
       dailyWordsLearned: [],
       screenTimeTodayMinutes: 0,
       level,
+      gender,
     };
     const updatedRoster = [...roster, newStudent];
     setRoster(updatedRoster);
     saveStudentRoster(updatedRoster);
     setStudent(newStudent);
     saveStudentProfile(newStudent);
+  };
+
+  const handleDeleteStudent = (studentId: string) => {
+    if (roster.length <= 1) {
+      alert("Impossible de supprimer le dernier élève du roster !");
+      return;
+    }
+    const updatedRoster = roster.filter((s) => s.id !== studentId);
+    setRoster(updatedRoster);
+    saveStudentRoster(updatedRoster);
+    if (student.id === studentId) {
+      setStudent(updatedRoster[0]);
+      saveStudentProfile(updatedRoster[0]);
+    }
+  };
+
+  const handleUpdateStudentRole = (studentId: string, role: 'student' | 'admin' | 'creator') => {
+    const updatedRoster = roster.map((s) => (s.id === studentId ? { ...s, role } : s));
+    setRoster(updatedRoster);
+    saveStudentRoster(updatedRoster);
+    if (student.id === studentId) {
+      const updatedStudent = { ...student, role };
+      setStudent(updatedStudent);
+      saveStudentProfile(updatedStudent);
+    }
   };
 
   const handleUpdateCurrency = (studentId: string, starsDelta: number, gemsDelta: number) => {
@@ -307,8 +340,10 @@ export default function App() {
         onOpenAI={() => setIsAIModalOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenBadges={() => setIsBadgesModalOpen(true)}
+        onOpenDailyChallenges={() => setIsDailyChallengesOpen(true)}
         onOpenParental={() => setIsParentalModalOpen(true)}
         onOpenAdmin={() => setActiveTab('admin')}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {announcement && (
@@ -557,6 +592,8 @@ export default function App() {
                   learnedWords={student.dailyWordsLearned}
                 />
 
+                <StudentStatsCard student={student} lang={lang} />
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <motion.button
                     whileHover={{ scale: 1.03, y: -3 }}
@@ -664,7 +701,11 @@ export default function App() {
                   <RootDetectiveGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
                 )}
                 {alphabetSubTab === 'souq' && (
-                  <SouqMarketGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
+                  <SouqMarketGame
+                    lang={lang}
+                    student={student}
+                    onUpdateStudent={setStudent}
+                  />
                 )}
                 {alphabetSubTab === 'diwan' && (
                   <DiwanQuestGame lang={lang} onReward={(s, g) => handleReward(s, g, 'first_letter')} />
@@ -730,6 +771,8 @@ export default function App() {
                   saveStudentProfile(selected);
                 }}
                 onAddStudent={handleAddStudent}
+                onDeleteStudent={handleDeleteStudent}
+                onUpdateStudentRole={handleUpdateStudentRole}
                 onUpdateCurrency={handleUpdateCurrency}
                 onToggleBan={handleToggleBan}
                 isGameClosed={isGameClosed}
@@ -747,6 +790,28 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Banned for Cheating Overlay */}
+      {Boolean((student as any).isBanned) && (
+        <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full text-center space-y-6 border-4 border-rose-600 shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-4xl animate-bounce">
+              🛑
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black font-['Fredoka'] text-slate-900 dark:text-white">
+                Compte Banni pour Tricherie !
+              </h3>
+              <p className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                You are banned for cheating. Votre accès aux jeux a été suspendu par l’administrateur.
+              </p>
+            </div>
+            <div className="text-xs text-slate-500">
+              Veuillez contacter le créateur (Maryam & son fils) depuis le panneau administrateur.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Game Closed / Lockdown Overlay */}
       {isGameClosed && activeTab !== 'admin' && (
@@ -788,6 +853,16 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                sound.playPop();
+                setIsChangelogOpen(true);
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-bold text-xs hover:bg-indigo-200 transition-colors cursor-pointer"
+            >
+              <span>🚀</span>
+              <span>Notes de Version</span>
+            </button>
             <button
               onClick={() => setIsWishModalOpen(true)}
               className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs hover:bg-amber-200 transition-colors cursor-pointer"
@@ -883,6 +958,35 @@ export default function App() {
         isOpen={isWishModalOpen}
         onClose={() => setIsWishModalOpen(false)}
         studentName={student.name}
+      />
+
+      <ChangelogModal
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+        lang={lang}
+        version={gameVersion}
+      />
+
+      <StudentAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        lang={lang}
+        currentStudent={student}
+        roster={roster}
+        onSelectStudent={(selected) => {
+          setStudent(selected);
+          saveStudentProfile(selected);
+        }}
+        onAddStudent={handleAddStudent}
+      />
+
+      <DailyChallengesModal
+        isOpen={isDailyChallengesOpen}
+        onClose={() => setIsDailyChallengesOpen(false)}
+        lang={lang}
+        student={student}
+        onUpdateStudent={setStudent}
+        onReward={handleReward}
       />
 
       {/* Floating Sound & Music Controller */}

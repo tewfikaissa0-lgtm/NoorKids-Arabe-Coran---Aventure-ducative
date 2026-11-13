@@ -140,6 +140,26 @@ export interface StudentProfile {
   screenTimeTodayMinutes: number;
   level: 'Débutant' | 'Intermédiaire' | 'Petit Savant';
   surahRewardCooldowns?: Record<number, number>; // timestamp in ms
+  role?: 'student' | 'admin' | 'creator';
+  gender?: 'boy' | 'girl';
+  dailyChallenges?: {
+    date: string;
+    challenges: {
+      id: string;
+      title: Record<Language, string>;
+      description: Record<Language, string>;
+      target: number;
+      current: number;
+      rewardStars: number;
+      rewardGems: number;
+      completed: boolean;
+      claimed: boolean;
+      icon: string;
+    }[];
+  };
+  purchasedSouqItems?: string[];
+  isBanned?: boolean;
+  equippedItem?: string;
 }
 
 export interface ParentalSettings {

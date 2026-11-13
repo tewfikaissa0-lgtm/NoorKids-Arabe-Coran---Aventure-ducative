@@ -137,8 +137,18 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   </span>
                   <span className="text-2xl">{s.avatar}</span>
                   <div>
-                    <div className="font-bold text-xs sm:text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <div className="font-bold text-xs sm:text-sm text-slate-800 dark:text-white flex items-center gap-1.5 flex-wrap">
                       <span>{s.name}</span>
+                      {s.role === 'admin' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-black">
+                          👑 Admin
+                        </span>
+                      )}
+                      {s.role === 'creator' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400 font-black">
+                          👑✨ Créateur
+                        </span>
+                      )}
                       {isSelf && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white font-black">
                           Moi

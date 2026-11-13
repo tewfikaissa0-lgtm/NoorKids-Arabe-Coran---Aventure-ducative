@@ -45,7 +45,9 @@ interface AdminDashboardProps {
   roster: StudentProfile[];
   activeStudent: StudentProfile;
   onSelectStudent: (student: StudentProfile) => void;
-  onAddStudent: (name: string, level: StudentProfile['level']) => void;
+  onAddStudent: (name: string, level: StudentProfile['level'], gender: 'boy' | 'girl', avatar: string) => void;
+  onDeleteStudent: (studentId: string) => void;
+  onUpdateStudentRole: (studentId: string, role: 'student' | 'admin' | 'creator') => void;
   onUpdateCurrency: (studentId: string, starsDelta: number, gemsDelta: number) => void;
   onToggleBan: (studentId: string) => void;
   isGameClosed: boolean;
@@ -67,6 +69,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   activeStudent,
   onSelectStudent,
   onAddStudent,
+  onDeleteStudent,
+  onUpdateStudentRole,
   onUpdateCurrency,
   onToggleBan,
   isGameClosed,
@@ -85,13 +89,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<boolean>(false);
 
-  const [activeTabAdmin, setActiveTabAdmin] = useState<'roster' | 'wishes' | 'multipliers' | 'settings' | 'creative20' | 'servers'>('roster');
+  const [activeTabAdmin, setActiveTabAdmin] = useState<'roster' | 'wishes' | 'multipliers' | 'settings' | 'creative20' | 'servers' | 'playstore' | 'coop'>('roster');
   const [activeBetaServer, setActiveBetaServer] = useState<string>('Europe - Paris (v1.6.0-beta)');
+  const [coopTargetStars, setCoopTargetStars] = useState<number>(5000);
 
   const [selectedForReport, setSelectedForReport] = useState<StudentProfile>(activeStudent);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
   const [newStudentName, setNewStudentName] = useState<string>('');
   const [newStudentLevel, setNewStudentLevel] = useState<StudentProfile['level']>('Débutant');
+  const [newStudentGender, setNewStudentGender] = useState<'boy' | 'girl'>('boy');
+  const [newStudentAvatar, setNewStudentAvatar] = useState<string>('🦁');
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [updateStatus, setUpdateStatus] = useState<string>(`À jour (${gameVersion})`);
   const [customAnnouncementInput, setCustomAnnouncementInput] = useState<string>(announcement);
@@ -116,13 +123,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     let timer: any = null;
     if (timerActive && countdownSeconds > 0) {
       timer = setInterval(() => {
-        setCountdownSeconds((prev) => Math.max(0, prev - 1));
+        setCountdownSeconds((prev) => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            onToggleCloseGame(true);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     }
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [timerActive, countdownSeconds]);
+  }, [timerActive, countdownSeconds, onToggleCloseGame]);
 
   const formatCountdown = (totalSecs: number) => {
     const mins = Math.floor(totalSecs / 60);
@@ -156,10 +170,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!newStudentName.trim()) return;
     sound.playStarChime();
-    onAddStudent(newStudentName.trim(), newStudentLevel);
+    onAddStudent(newStudentName.trim(), newStudentLevel, newStudentGender, newStudentAvatar);
     setNewStudentName('');
     setShowAddForm(false);
-    triggerToast('Élève créé avec succès !');
+    triggerToast('Élève créé avec succès ! (1000 ⭐ & 200 💎 offerts)');
   };
 
   const triggerToast = (msg: string) => {
@@ -332,6 +346,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <Compass className="w-4 h-4" />
           <span>🌍 Serveurs Beta Globaux</span>
+        </button>
+
+        <button
+          onClick={() => { sound.playPop(); setActiveTabAdmin('playstore'); }}
+          className={`px-5 py-2.5 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
+            activeTabAdmin === 'playstore' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+          }`}
+        >
+          <span>🤖</span>
+          <span>Google Play Store</span>
+        </button>
+
+        <button
+          onClick={() => { sound.playPop(); setActiveTabAdmin('coop'); }}
+          className={`px-5 py-2.5 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
+            activeTabAdmin === 'coop' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+          }`}
+        >
+          <Award className="w-4 h-4 text-amber-400" />
+          <span>Défis Coopératifs 🤝</span>
         </button>
       </div>
 
@@ -519,6 +553,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
                   />
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewStudentGender('boy')}
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-bold ${
+                        newStudentGender === 'boy' ? 'bg-sky-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700'
+                      }`}
+                    >
+                      👦 Garçon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewStudentGender('girl')}
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-bold ${
+                        newStudentGender === 'girl' ? 'bg-pink-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700'
+                      }`}
+                    >
+                      👧 Fille
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                      Choisir un avatar (animal / personnage) :
+                    </label>
+                    <div className="grid grid-cols-8 gap-1.5 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                      {['🦁', '🐯', '🐼', '🦊', '🐰', '🐨', '🦄', '🦖', '🦉', '🐱', '🐶', '🐢', '👦', '👧', '👶', '🧑‍🎓'].map((av) => (
+                        <button
+                          key={av}
+                          type="button"
+                          onClick={() => setNewStudentAvatar(av)}
+                          className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition-all cursor-pointer ${
+                            newStudentAvatar === av ? 'bg-amber-500 text-white scale-110 shadow-sm' : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          {av}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     {(['Débutant', 'Intermédiaire', 'Petit Savant'] as const).map((lvl) => (
                       <button
                         key={lvl}
@@ -562,8 +637,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="flex items-center gap-3">
                         <span className="text-3xl">{student.avatar}</span>
                         <div>
-                          <div className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-                            {student.name}
+                          <div className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2 flex-wrap">
+                            <span>{student.name}</span>
+                            {student.role === 'admin' && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-black">
+                                👑 Admin
+                              </span>
+                            )}
+                            {student.role === 'creator' && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400 font-black">
+                                👑✨ Créateur
+                              </span>
+                            )}
                             {isBanned && <span className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-black">BANNI</span>}
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -585,6 +670,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         >
                           <Ban className="w-4 h-4" />
                         </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Supprimer définitivement l'élève ${student.name} ?`)) {
+                              sound.playPop();
+                              onDeleteStudent(student.id);
+                              const remaining = roster.filter((s) => s.id !== student.id);
+                              if (remaining.length > 0 && selectedForReport.id === student.id) {
+                                setSelectedForReport(remaining[0]);
+                              }
+                              triggerToast(`Élève ${student.name} supprimé.`);
+                            }
+                          }}
+                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-200 text-rose-600 transition-colors cursor-pointer"
+                          title="Supprimer l'élève"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -598,11 +702,65 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5" />
-                    <span>Gestion des Points & Diamants (Ajouter ou Retirer)</span>
+                    <span>Gestion des Points, Diamants & Rôles</span>
                   </span>
-                  <h3 className="text-2xl font-black text-slate-800 dark:text-white font-['Fredoka']">
-                    {selectedForReport.name} ({selectedForReport.stars} ⭐ · {selectedForReport.gems || 0} 💎)
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white font-['Fredoka'] flex items-center gap-2">
+                    <span>{selectedForReport.name} ({selectedForReport.stars} ⭐ · {selectedForReport.gems || 0} 💎)</span>
+                    {selectedForReport.role === 'admin' && <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-black">👑 Admin</span>}
+                    {selectedForReport.role === 'creator' && <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400 font-black">👑✨ Créateur</span>}
                   </h3>
+                </div>
+              </div>
+
+              {/* Role Assignment (Admin / Créateur / Élève) */}
+              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-slate-800 border border-amber-200 dark:border-slate-700 space-y-3">
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-300 block">
+                  Attribuer un Rôle Spécial (Strictement Admin / Créateur)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      sound.playPop();
+                      onUpdateStudentRole(selectedForReport.id, 'student');
+                      triggerToast(`${selectedForReport.name} est maintenant Élève standard.`);
+                    }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      !selectedForReport.role || selectedForReport.role === 'student'
+                        ? 'bg-slate-700 text-white shadow'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    👤 Élève
+                  </button>
+                  <button
+                    onClick={() => {
+                      sound.playStarChime();
+                      onUpdateStudentRole(selectedForReport.id, 'admin');
+                      triggerToast(`${selectedForReport.name} est promu Admin 👑 !`);
+                    }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      selectedForReport.role === 'admin'
+                        ? 'bg-amber-500 text-white shadow-lg ring-2 ring-amber-300'
+                        : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    }`}
+                  >
+                    👑 Admin
+                  </button>
+                  <button
+                    onClick={() => {
+                      sound.playCelebrationFanfare();
+                      onUpdateStudentRole(selectedForReport.id, 'creator');
+                      confetti({ particleCount: 40, spread: 50 });
+                      triggerToast(`${selectedForReport.name} est promu Créateur 👑✨ !`);
+                    }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      selectedForReport.role === 'creator'
+                        ? 'bg-amber-600 text-white shadow-lg ring-2 ring-amber-400'
+                        : 'bg-amber-200 text-amber-900 border border-amber-400'
+                    }`}
+                  >
+                    👑✨ Créateur
+                  </button>
                 </div>
               </div>
 
@@ -998,6 +1156,107 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Tab: Cooperative Class Challenges */}
+      {activeTabAdmin === 'coop' && (() => {
+        const totalClassStars = roster.reduce((acc, s) => acc + s.stars, 0);
+        const coopProgressPercent = Math.min(100, Math.round((totalClassStars / coopTargetStars) * 100));
+
+        return (
+          <div className="space-y-6">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 shadow-md space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+                    Défis Coopératifs 🤝
+                  </span>
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white font-['Fredoka'] mt-1">
+                    Défi Collectif de la Classe
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    La somme des étoiles ⭐ de tous les élèves réunis débloque un badge exclusif pour toute la classe !
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 dark:bg-amber-950/40 px-5 py-3 rounded-2xl border border-amber-300 dark:border-amber-700 text-center">
+                  <span className="text-[10px] font-bold text-amber-600 block">TOTAL CLASSE ÉTOILES</span>
+                  <span className="text-2xl font-black text-amber-700 dark:text-amber-300">
+                    ⭐ {totalClassStars} / {coopTargetStars}
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-bold">
+                  <span>Progression collective</span>
+                  <span>{coopProgressPercent}%</span>
+                </div>
+                <div className="w-full h-4 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                    style={{ width: `${coopProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-3">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white font-['Fredoka']">
+                    🎯 Objectif Actif : Trésor de la Oumma 🕌
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Atteignez {coopTargetStars} étoiles cumulées avec tous les élèves du roster pour distribuer automatiquement le badge légendaire à la classe entière.
+                  </p>
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      onClick={() => setCoopTargetStars(3000)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${coopTargetStars === 3000 ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      3 000 ⭐
+                    </button>
+                    <button
+                      onClick={() => setCoopTargetStars(5000)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${coopTargetStars === 5000 ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      5 000 ⭐
+                    </button>
+                    <button
+                      onClick={() => setCoopTargetStars(10000)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${coopTargetStars === 10000 ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      10 000 ⭐
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white font-['Fredoka']">
+                      🏆 Récompense Collective
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      Badge spécial : <span className="font-black text-amber-500">🕌 Trésor de la Oumma</span> (Distribué à tous les élèves).
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      sound.playCelebrationFanfare();
+                      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+                      triggerToast('Badge collectif distribué avec succès à tous les élèves du roster !');
+                    }}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Award className="w-4 h-4" />
+                    <span>Distribuer le Badge à la Classe ✨</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Official Certificate & PDF Report Modal */}
       {isPrintModalOpen && (

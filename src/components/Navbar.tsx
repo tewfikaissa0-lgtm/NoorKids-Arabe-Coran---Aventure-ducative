@@ -16,6 +16,7 @@ import {
   Globe,
   WifiOff,
   ChevronDown,
+  Target,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -30,8 +31,10 @@ interface NavbarProps {
   onOpenAI: () => void;
   onOpenLeaderboard: () => void;
   onOpenBadges: () => void;
+  onOpenDailyChallenges: () => void;
   onOpenParental: () => void;
   onOpenAdmin: () => void;
+  onOpenAuth: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -46,8 +49,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAI,
   onOpenLeaderboard,
   onOpenBadges,
+  onOpenDailyChallenges,
   onOpenParental,
   onOpenAdmin,
+  onOpenAuth,
 }) => {
   const t = translations[lang] || translations.fr;
   const [logoClicks, setLogoClicks] = useState(0);
@@ -83,8 +88,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-['Fredoka'] tracking-tight">
-                {t.appName}
+              <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-['Fredoka'] tracking-tight flex items-center gap-2">
+                <span>{t.appName}</span>
+                {student.role === 'admin' && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-black">
+                    👑 Admin
+                  </span>
+                )}
+                {student.role === 'creator' && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400 font-black">
+                    👑✨ Créateur
+                  </span>
+                )}
               </h1>
               {/* Difficulty Level Tag */}
               <button
@@ -97,6 +112,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <span>⭐ {student.level}</span>
                 <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {/* Profile ID & Auth Button */}
+              <button
+                onClick={() => {
+                  sound.playPop();
+                  onOpenAuth();
+                }}
+                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 font-extrabold text-[11px] border border-indigo-300 dark:border-indigo-700 hover:scale-105 transition-transform cursor-pointer"
+                title="Mon ID unique et Connexion par ID"
+              >
+                <span>🏷️</span>
+                <span className="font-mono text-[10px]">{student.id}</span>
               </button>
             </div>
             {/* Maryam et son fils dedication */}
@@ -171,6 +199,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Mes Badges"
           >
             <Award className="w-4 h-4 text-purple-500" />
+          </button>
+
+          {/* Daily Challenges */}
+          <button
+            onClick={() => {
+              sound.playPop();
+              onOpenDailyChallenges();
+            }}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-amber-100 hover:text-amber-800 transition-colors shadow-2xs relative"
+            title="Défis Quotidiens Dynamiques"
+          >
+            <Target className="w-4 h-4 text-orange-500" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping" />
           </button>
 
           {/* Language Selector */}
